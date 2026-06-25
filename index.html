@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VANDAL YARD — The Wall</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="gallery-page">
+  <div id="app">
+
+    <header id="topbar">
+      <div class="topbar-left">
+        <a href="index.html" style="text-decoration:none"><h1>VANDAL YARD</h1></a>
+        <span class="tagline">the wall</span>
+      </div>
+      <nav class="topbar-right">
+        <a href="index.html" class="nav-link active">THE WALL</a>
+        <a href="go-paint.html" class="nav-link nav-go-paint">GO PAINT</a>
+      </nav>
+    </header>
+
+    <div class="gallery-wrap">
+      <div class="gallery-header">
+        <h2>THE WALL</h2>
+        <p>Latest pieces from the yard. Oldest fall off after page 5.</p>
+      </div>
+
+      <div id="galleryGrid" class="wall-grid"></div>
+
+      <div id="galleryEmpty" class="gallery-empty hidden">
+        No pieces yet. Hit the studio and post your first one.
+      </div>
+
+      <div id="pageNav" class="gallery-page-nav"></div>
+
+      <div class="gallery-footer">
+        &copy; 2026 VANDAL YARD — This is a free community art platform. Please be respectful; offensive or hateful content will be removed.
+        <br><a href="terms.html" style="color:rgba(255,255,255,0.3);text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.15);">Terms of Use</a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Lightbox modal -->
+  <div id="lightbox" class="lightbox hidden">
+    <div class="lightbox-backdrop"></div>
+    <div class="lightbox-content">
+      <button class="lightbox-close" title="Close">&times;</button>
+      <img id="lightboxImg" class="lightbox-img" alt="">
+      <div class="lightbox-info">
+        <span id="lightboxTitle" class="lightbox-title"></span>
+        <span id="lightboxMeta" class="lightbox-meta"></span>
+      </div>
+    </div>
+  </div>
+
+  <script src="supabase.js"></script>
+  <script src="gallery.js"></script>
+</body>
+</html>

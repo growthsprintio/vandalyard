@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VANDAL YARD — The Yard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+
+    <header id="topbar">
+      <div class="topbar-left">
+        <a href="index.html" style="text-decoration:none"><h1>VANDAL YARD</h1></a>
+      </div>
+      <nav class="topbar-right">
+        <a href="index.html" class="nav-link">THE WALL</a>
+        <a href="go-paint.html" class="nav-link nav-go-paint active">GO PAINT</a>
+      </nav>
+    </header>
+
+    <div id="workspace">
+
+      <!-- Left toolbar -->
+      <aside id="toolbar">
+
+        <section class="tool-group">
+          <label class="tool-label">SURFACE</label>
+          <select id="surfaceSelect">
+            <option value="train">Classic Train</option>
+            <option value="wall">Brick Wall</option>
+            <option value="freight">Freight Boxcar</option>
+            <option value="billboard">City Billboard</option>
+          </select>
+        </section>
+
+        <section class="tool-group">
+          <label class="tool-label">COLOR</label>
+          <div id="palette"></div>
+          <div class="color-custom-row">
+            <input type="color" id="colorPicker" value="#FF0000" title="Custom color">
+            <span id="colorHex">#FF0000</span>
+          </div>
+        </section>
+
+        <section class="tool-group">
+          <label class="tool-label">TOOL</label>
+          <div id="brushButtons">
+            <button class="brush-btn active" data-brush="spray" title="Spray can">
+              <span class="brush-icon">◎</span> SPRAY
+            </button>
+            <button class="brush-btn" data-brush="marker" title="Marker / tag pen">
+              <span class="brush-icon">✎</span> MARKER
+            </button>
+            <button class="brush-btn" data-brush="chisel" title="Chisel tip">
+              <span class="brush-icon">▬</span> CHISEL
+            </button>
+          </div>
+        </section>
+
+        <section class="tool-group">
+          <label class="tool-label">CAP / SIZE</label>
+          <div id="capButtons">
+            <button class="cap-btn" data-cap="thin" title="Thin (1)">
+              <span class="cap-dot cap-thin"></span> THIN
+            </button>
+            <button class="cap-btn active" data-cap="medium" title="Medium (2)">
+              <span class="cap-dot cap-medium"></span> MED
+            </button>
+            <button class="cap-btn" data-cap="fat" title="Fat (3)">
+              <span class="cap-dot cap-fat"></span> FAT
+            </button>
+            <button class="cap-btn" data-cap="flare" title="Flare (4)">
+              <span class="cap-dot cap-flare"></span> FLARE
+            </button>
+          </div>
+        </section>
+
+        <section class="tool-group">
+          <label class="tool-label">OPACITY</label>
+          <input type="range" id="opacitySlider" min="15" max="100" value="85" step="5">
+          <span id="opacityValue">85%</span>
+        </section>
+
+        <section class="tool-group">
+          <label class="tool-label">EXTRAS</label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="gridToggle"> Ghost grid
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="maskToggle"> Show paint zones
+          </label>
+        </section>
+
+      </aside>
+
+      <button id="toolbarToggle" class="panel-toggle panel-toggle-top" aria-label="Toggle tools">
+        <span class="toggle-arrow">▼</span> <span class="toggle-label">TOOLS</span>
+      </button>
+
+      <!-- Canvas area -->
+      <main id="canvasWrap">
+        <canvas id="bgCanvas"></canvas>
+        <canvas id="maskCanvas"></canvas>
+        <canvas id="paintCanvas"></canvas>
+        <canvas id="gridCanvas"></canvas>
+        <div id="cursorRing"></div>
+      </main>
+
+    </div>
+
+    <!-- Bottom utility bar -->
+    <button id="utilbarToggle" class="panel-toggle panel-toggle-bottom" aria-label="Toggle actions">
+      <span class="toggle-arrow">▲</span> <span class="toggle-label">MORE</span>
+    </button>
+    <footer id="utilbar">
+      <div class="util-left">
+        <button id="btnUndo" title="Undo (Z)">UNDO</button>
+        <button id="btnClear" title="Clear (C)">CLEAR</button>
+      </div>
+      <div class="util-right">
+        <button id="btnPost" title="Post to the wall" class="btn-post">POST TO WALL</button>
+        <button id="btnDownload" title="Download piece">DOWNLOAD</button>
+        <button id="btnFullscreen" title="Toggle fullscreen">⛶</button>
+      </div>
+    </footer>
+
+    <!-- Post modal -->
+    <div id="postModal" class="modal hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-box">
+        <h2>POST YOUR PIECE</h2>
+        <p class="modal-sub">Drop it on the wall for everyone to see.</p>
+        <label class="modal-label">TITLE</label>
+        <input type="text" id="postTitle" maxlength="40" placeholder="Name your piece...">
+        <label class="modal-label">ARTIST</label>
+        <input type="text" id="postArtist" maxlength="20" placeholder="Tag name (optional)">
+        <div class="modal-preview-wrap">
+          <canvas id="postPreview"></canvas>
+        </div>
+        <div class="modal-actions">
+          <button id="postCancel" class="btn-flat">CANCEL</button>
+          <button id="postSubmit" class="btn-accent">POST IT</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="supabase.js"></script>
+  <script src="app.js"></script>
+  <script>
+    // Mobile panel toggles
+    const toolbarToggle = document.getElementById('toolbarToggle');
+    const utilbarToggle = document.getElementById('utilbarToggle');
+    const toolbar = document.getElementById('toolbar');
+    const utilbar = document.getElementById('utilbar');
+
+    toolbarToggle.addEventListener('click', () => {
+      toolbar.classList.toggle('collapsed');
+      toolbarToggle.classList.toggle('flipped');
+    });
+    utilbarToggle.addEventListener('click', () => {
+      utilbar.classList.toggle('collapsed');
+      utilbarToggle.classList.toggle('flipped');
+    });
+
+    // Start collapsed on mobile
+    if (window.innerWidth <= 700) {
+      toolbar.classList.add('collapsed');
+      utilbar.classList.add('collapsed');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VANDAL YARD — Admin</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body.admin-page { overflow-y: auto; }
+    .admin-page #app { height: auto; min-height: 100vh; }
+
+    /* Login gate */
+    .admin-login {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 70vh;
+      gap: 16px;
+    }
+    .admin-login h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 18px;
+      letter-spacing: 3px;
+      color: #ddd;
+    }
+    .admin-login input[type="password"] {
+      background: #303134;
+      border: none;
+      border-radius: 20px;
+      color: #e8eaed;
+      padding: 10px 18px;
+      font-family: inherit;
+      font-size: 13px;
+      width: 260px;
+      text-align: center;
+    }
+    .admin-login input[type="password"]::placeholder { color: #9aa0a6; }
+    .admin-login input[type="password"]:focus { outline: none; box-shadow: 0 0 0 2px #8ab4f8; }
+    .admin-login button {
+      background: #8ab4f8;
+      color: #202124;
+      border: none;
+      border-radius: 20px;
+      padding: 10px 32px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      cursor: pointer;
+    }
+    .admin-login button:hover { background: #aecbfa; }
+    .admin-login .login-error {
+      color: #f28b82;
+      font-size: 12px;
+      min-height: 18px;
+    }
+
+    /* Admin panel */
+    .admin-wrap {
+      padding: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .admin-header h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 20px;
+      letter-spacing: 3px;
+      color: #ddd;
+    }
+    .admin-stats {
+      font-size: 12px;
+      color: #9aa0a6;
+    }
+    .admin-logout {
+      background: #303134;
+      color: #e8eaed;
+      border: none;
+      border-radius: 20px;
+      padding: 8px 18px;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .admin-logout:hover { background: #3c4043; }
+
+    /* Piece rows */
+    .admin-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .admin-piece {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 10px 14px;
+      transition: border-color 0.15s;
+    }
+    .admin-piece:hover { border-color: rgba(255,255,255,0.12); }
+
+    .admin-piece-img {
+      width: 140px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 8px;
+      background: #08080a;
+      flex-shrink: 0;
+    }
+    .admin-piece-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .admin-piece-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #e8eaed;
+    }
+    .admin-piece-meta {
+      font-size: 11px;
+      color: #9aa0a6;
+      margin-top: 2px;
+    }
+    .admin-piece-id {
+      font-size: 10px;
+      color: #5f6368;
+      font-family: monospace;
+      margin-top: 2px;
+    }
+    .admin-delete {
+      background: #5f2120;
+      color: #f28b82;
+      border: none;
+      border-radius: 20px;
+      padding: 8px 18px;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .admin-delete:hover {
+      background: #8b3330;
+    }
+    .admin-empty {
+      text-align: center;
+      padding: 60px;
+      color: #5f6368;
+      font-size: 14px;
+    }
+    .admin-clear-all {
+      background: #5f2120;
+      color: #f28b82;
+      border: none;
+      border-radius: 20px;
+      padding: 8px 18px;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .admin-clear-all:hover { background: #8b3330; }
+
+    @media (max-width: 600px) {
+      .admin-piece { flex-direction: column; align-items: stretch; gap: 10px; }
+      .admin-piece-img { width: 100%; height: 120px; }
+      .admin-delete { align-self: flex-end; }
+    }
+  </style>
+</head>
+<body class="admin-page">
+  <div id="app">
+
+    <header id="topbar">
+      <div class="topbar-left">
+        <a href="index.html" style="text-decoration:none"><h1>VANDAL YARD</h1></a>
+        <span class="tagline">admin</span>
+      </div>
+      <nav class="topbar-right">
+        <a href="index.html" class="nav-link">THE WALL</a>
+        <a href="go-paint.html" class="nav-link nav-go-paint">GO PAINT</a>
+      </nav>
+    </header>
+
+    <!-- Login gate -->
+    <div id="loginGate" class="admin-login">
+      <h2>ADMIN LOGIN</h2>
+      <input type="password" id="adminPass" placeholder="Password" autocomplete="off">
+      <button id="adminLoginBtn">LOG IN</button>
+      <div id="loginError" class="login-error"></div>
+    </div>
+
+    <!-- Admin panel (hidden until login) -->
+    <div id="adminPanel" class="admin-wrap hidden">
+      <div class="admin-header">
+        <div>
+          <h2>MANAGE THE WALL</h2>
+          <div id="adminStats" class="admin-stats"></div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button id="clearAllBtn" class="admin-clear-all">DELETE ALL</button>
+          <button id="logoutBtn" class="admin-logout">LOG OUT</button>
+        </div>
+      </div>
+      <div id="adminGrid" class="admin-grid"></div>
+      <div id="adminEmpty" class="admin-empty hidden">No pieces on the wall.</div>
+    </div>
+
+  </div>
+
+  <script src="supabase.js"></script>
+  <script>
+    function simpleHash(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        const c = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + c;
+        hash |= 0;
+      }
+      return hash.toString();
+    }
+
+    const ADMIN_HASH = simpleHash('vandalyard2025');
+    const SESSION_KEY = 'vandalyard_admin_session';
+
+    const loginGate = document.getElementById('loginGate');
+    const adminPanel = document.getElementById('adminPanel');
+    const adminPass = document.getElementById('adminPass');
+    const loginBtn = document.getElementById('adminLoginBtn');
+    const loginError = document.getElementById('loginError');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const adminGrid = document.getElementById('adminGrid');
+    const adminEmpty = document.getElementById('adminEmpty');
+    const adminStats = document.getElementById('adminStats');
+
+    function isLoggedIn() {
+      return sessionStorage.getItem(SESSION_KEY) === ADMIN_HASH;
+    }
+
+    function showPanel() {
+      loginGate.classList.add('hidden');
+      adminPanel.classList.remove('hidden');
+      renderAdmin();
+    }
+
+    function showLogin() {
+      loginGate.classList.remove('hidden');
+      adminPanel.classList.add('hidden');
+      sessionStorage.removeItem(SESSION_KEY);
+    }
+
+    function login() {
+      const pass = adminPass.value;
+      if (simpleHash(pass) === ADMIN_HASH) {
+        sessionStorage.setItem(SESSION_KEY, ADMIN_HASH);
+        loginError.textContent = '';
+        showPanel();
+      } else {
+        loginError.textContent = 'Wrong password.';
+        adminPass.value = '';
+        adminPass.focus();
+      }
+    }
+
+    loginBtn.addEventListener('click', login);
+    adminPass.addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+    logoutBtn.addEventListener('click', showLogin);
+
+    function timeAgo(ts) {
+      const diff = Date.now() - new Date(ts).getTime();
+      const mins = Math.floor(diff / 60000);
+      if (mins < 1) return 'just now';
+      if (mins < 60) return mins + 'm ago';
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return hrs + 'h ago';
+      const days = Math.floor(hrs / 24);
+      if (days < 7) return days + 'd ago';
+      return new Date(ts).toLocaleDateString();
+    }
+
+    function escHtml(s) {
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    async function deletePiece(id) {
+      if (!confirm('Delete this piece?')) return;
+      const filename = id + '.jpg';
+      await db.deleteImage(filename);
+      await db.deletePiece(id);
+      renderAdmin();
+    }
+
+    async function clearAll() {
+      if (!confirm('Delete ALL pieces from the wall? This cannot be undone.')) return;
+      const pieces = await db.getPieces(0, 200);
+      for (const p of pieces) {
+        await db.deleteImage(p.id + '.jpg');
+      }
+      await db.deleteAllPieces();
+      renderAdmin();
+    }
+
+    clearAllBtn.addEventListener('click', clearAll);
+
+    async function renderAdmin() {
+      const total = await db.getTotalCount();
+      const pieces = await db.getPieces(0, 200);
+
+      adminStats.textContent = total + ' piece' + (total !== 1 ? 's' : '') + ' on the wall';
+
+      if (total === 0) {
+        adminGrid.innerHTML = '';
+        adminEmpty.classList.remove('hidden');
+        return;
+      }
+
+      adminEmpty.classList.add('hidden');
+
+      adminGrid.innerHTML = pieces.map(p => `
+        <div class="admin-piece" data-id="${p.id}">
+          <img class="admin-piece-img" src="${escHtml(p.image_url)}" alt="${escHtml(p.title)}" loading="lazy">
+          <div class="admin-piece-info">
+            <div class="admin-piece-title">${escHtml(p.title)}</div>
+            <div class="admin-piece-meta">${escHtml(p.artist)} &middot; ${timeAgo(p.created_at)} &middot; ${p.surface || 'unknown'}</div>
+            <div class="admin-piece-id">ID: ${p.id}</div>
+          </div>
+          <button class="admin-delete" onclick="deletePiece('${p.id}')">DELETE</button>
+        </div>
+      `).join('');
+    }
+
+    if (isLoggedIn()) {
+      showPanel();
+    } else {
+      showLogin();
+    }
+  </script>
+</body>
+</html>
