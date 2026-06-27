@@ -780,6 +780,76 @@ body.gallery-page {
 
 .hidden { display: none !important; }
 
+/* ══════════════════════════════════
+   STICKY SITE FOOTER
+   ══════════════════════════════════ */
+
+/* Pages that use the shared footer lay out as a min-height column
+   so the footer sits at the bottom on short pages and flows after
+   content on long pages. */
+body.has-site-footer { overflow-y: auto; }
+.has-site-footer #app {
+  min-height: 100vh;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+}
+/* Main content region grows to fill, pushing footer down */
+.has-site-footer .gallery-wrap,
+.has-site-footer .terms-wrap,
+.has-site-footer .about-wrap,
+.has-site-footer .blog-wrap {
+  flex: 1 0 auto;
+}
+
+.site-footer {
+  flex-shrink: 0;
+  background: rgba(18,18,22,0.95);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  backdrop-filter: blur(8px);
+  margin-top: 40px;
+}
+
+.site-footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.site-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 22px;
+}
+
+.site-footer-links a {
+  color: rgba(255,255,255,0.55);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  transition: color 0.15s;
+}
+
+.site-footer-links a:hover { color: #8ab4f8; }
+
+.site-footer-meta {
+  font-size: 11px;
+  color: rgba(255,255,255,0.28);
+  letter-spacing: 0.3px;
+}
+
+@media (max-width: 600px) {
+  .site-footer-links { gap: 16px; }
+  .site-footer-inner { padding: 18px 16px; }
+}
+
 /* ── Responsive ── */
 /* ── Panel toggle buttons (hidden on desktop) ── */
 .panel-toggle {
