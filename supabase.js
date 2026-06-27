@@ -154,6 +154,37 @@ const db = {
     return res.ok;
   },
 
+  // ── SITE SETTINGS (key/value) ──
+  async getSettings() {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?select=key,value`, { headers: supabaseHeaders });
+    if (!res.ok) return {};
+    const rows = await res.json();
+    const out = {};
+    rows.forEach(r => { out[r.key] = r.value; });
+    return out;
+  },
+
+  async saveSetting(key, value) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/site_settings`, {
+      method: 'POST',
+      headers: { ...supabaseHeaders, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({ key, value: value == null ? '' : String(value), updated_at: new Date().toISOString() }),
+    });
+    return res.ok;
+  },
+
+  async saveSettings(obj) {
+    const rows = Object.entries(obj).map(([key, value]) => ({
+      key, value: value == null ? '' : String(value), updated_at: new Date().toISOString(),
+    }));
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/site_settings`, {
+      method: 'POST',
+      headers: { ...supabaseHeaders, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify(rows),
+    });
+    return res.ok;
+  },
+
   // Upload a blog image to the 'pieces' bucket under a blog/ prefix
   async uploadBlogImage(filename, blob, contentType) {
     const res = await fetch(`${SUPABASE_URL}/storage/v1/object/pieces/blog/${filename}`, {
