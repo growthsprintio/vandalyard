@@ -29,6 +29,7 @@ const SURFACES = {
   billboard: { label: 'City Billboard',  generate: generateBillboardSurface, mask: generateBillboardMask },
   overpass:  { label: 'Highway Overpass', generate: generateOverpassSurface,  mask: generateOverpassMask },
   watertower:{ label: 'Water Tower',      generate: generateWaterTowerSurface, mask: generateWaterTowerMask },
+  subway:    { label: 'Subway Interior',  generate: generateSubwaySurface,    mask: generateSubwayMask },
 };
 
 // ── App state ──
@@ -1596,6 +1597,187 @@ function generateWaterTowerMask(ctx, w, h) {
   const L = waterTowerLayout(w, h);
   ctx.fillStyle = '#00FF00';
   ctx.fillRect(L.tankX, L.tankY, L.tankW, L.tankH);
+}
+
+// ── SUBWAY CAR INTERIOR SURFACE (procedural) ──
+
+// Shared layout: paint zones are the ad-card strip + the window row
+function subwayLayout(w, h) {
+  return {
+    ceilingH: h * 0.11,
+    adY: h * 0.12, adH: h * 0.10,            // advertising card strip (paint zone)
+    winY: h * 0.24, winH: h * 0.22,          // window row (paint zone)
+    seatY: h * 0.50, seatH: h * 0.20,
+    floorY: h * 0.74,
+    inset: w * 0.05,                          // left/right wall margin
+  };
+}
+
+function generateSubwaySurface(ctx, w, h) {
+  const L = subwayLayout(w, h);
+  const x0 = L.inset, x1 = w - L.inset, ww = x1 - x0;
+
+  // ── Back wall base (brushed stainless / cream panel) ──
+  const wall = ctx.createLinearGradient(0, 0, 0, L.floorY);
+  wall.addColorStop(0, '#c8c6bd');
+  wall.addColorStop(0.5, '#bdbbb2');
+  wall.addColorStop(1, '#a8a69d');
+  ctx.fillStyle = wall;
+  ctx.fillRect(0, 0, w, L.floorY);
+
+  // ── Ceiling ──
+  const ceil = ctx.createLinearGradient(0, 0, 0, L.ceilingH);
+  ceil.addColorStop(0, '#d8d6cf');
+  ceil.addColorStop(1, '#b8b6ad');
+  ctx.fillStyle = ceil;
+  ctx.fillRect(0, 0, w, L.ceilingH);
+  // Fluorescent light strip
+  ctx.fillStyle = '#f4f2e8';
+  ctx.fillRect(w * 0.1, L.ceilingH - 6, w * 0.8, 5);
+  const lightGlow = ctx.createLinearGradient(0, L.ceilingH, 0, L.ceilingH + 30);
+  lightGlow.addColorStop(0, 'rgba(255,250,230,0.25)');
+  lightGlow.addColorStop(1, 'transparent');
+  ctx.fillStyle = lightGlow;
+  ctx.fillRect(0, L.ceilingH, w, 30);
+  // Ceiling shadow line
+  ctx.fillStyle = 'rgba(0,0,0,0.10)';
+  ctx.fillRect(0, L.ceilingH, w, 2);
+
+  // ── Advertising card strip (paint zone) ──
+  const ad = ctx.createLinearGradient(0, L.adY, 0, L.adY + L.adH);
+  ad.addColorStop(0, '#eeece4');
+  ad.addColorStop(1, '#e2e0d6');
+  ctx.fillStyle = ad;
+  ctx.fillRect(x0, L.adY, ww, L.adH);
+  // Card dividers (individual ad panels)
+  ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+  ctx.lineWidth = 1.5;
+  const cards = 4;
+  for (let i = 0; i <= cards; i++) {
+    const cxp = x0 + (ww / cards) * i;
+    ctx.beginPath(); ctx.moveTo(cxp, L.adY); ctx.lineTo(cxp, L.adY + L.adH); ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+  ctx.strokeRect(x0, L.adY, ww, L.adH);
+  // Faint placeholder ad text
+  ctx.fillStyle = 'rgba(60,60,70,0.10)';
+  ctx.font = `bold ${Math.floor(L.adH * 0.4)}px Arial, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('ADVERTISE  HERE', w / 2, L.adY + L.adH * 0.62);
+  ctx.textAlign = 'start';
+
+  // ── Window row (paint zone) ──
+  // Recessed dark band behind windows
+  ctx.fillStyle = '#3a4048';
+  ctx.fillRect(x0, L.winY, ww, L.winH);
+  const wins = 3;
+  const gap = ww * 0.03;
+  const winW = (ww - gap * (wins + 1)) / wins;
+  for (let i = 0; i < wins; i++) {
+    const wx = x0 + gap + i * (winW + gap);
+    // Glass with daylight gradient + motion blur streaks
+    const glass = ctx.createLinearGradient(wx, L.winY, wx, L.winY + L.winH);
+    glass.addColorStop(0, '#9fb8c8');
+    glass.addColorStop(0.5, '#88a6b8');
+    glass.addColorStop(1, '#6f8a9c');
+    ctx.fillStyle = glass;
+    ctx.fillRect(wx, L.winY + 6, winW, L.winH - 12);
+    // Blurred tunnel-light streaks
+    ctx.fillStyle = 'rgba(255,255,255,0.10)';
+    for (let s = 0; s < 4; s++) {
+      ctx.fillRect(wx + winW * (0.1 + s * 0.22), L.winY + 6, winW * 0.04, L.winH - 12);
+    }
+    // Reflection sheen
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.beginPath();
+    ctx.moveTo(wx + winW * 0.55, L.winY + 6);
+    ctx.lineTo(wx + winW * 0.8, L.winY + 6);
+    ctx.lineTo(wx + winW * 0.45, L.winY + L.winH - 6);
+    ctx.lineTo(wx + winW * 0.2, L.winY + L.winH - 6);
+    ctx.closePath();
+    ctx.fill();
+    // Window frame (stainless)
+    ctx.strokeStyle = '#9a9890';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(wx, L.winY + 6, winW, L.winH - 12);
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(wx + 2, L.winY + 8, winW - 4, L.winH - 16);
+  }
+
+  // ── Bench seats (molded plastic) ──
+  const seat = ctx.createLinearGradient(0, L.seatY, 0, L.seatY + L.seatH);
+  seat.addColorStop(0, '#d98a3a');   // classic orange/tan seat
+  seat.addColorStop(0.5, '#c2762e');
+  seat.addColorStop(1, '#a8631f');
+  ctx.fillStyle = seat;
+  // seat back
+  ctx.fillRect(x0, L.seatY, ww, L.seatH * 0.55);
+  // seat base (slightly forward / darker)
+  ctx.fillStyle = '#b56a26';
+  ctx.fillRect(x0, L.seatY + L.seatH * 0.55, ww, L.seatH * 0.45);
+  // bucket-seat dividers
+  ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+  ctx.lineWidth = 2;
+  const seats = 6;
+  for (let i = 1; i < seats; i++) {
+    const sx = x0 + (ww / seats) * i;
+    ctx.beginPath();
+    ctx.moveTo(sx, L.seatY + 4);
+    ctx.lineTo(sx, L.seatY + L.seatH * 0.55);
+    ctx.stroke();
+  }
+  // seat highlight
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  ctx.fillRect(x0, L.seatY, ww, 3);
+  // shadow under seat
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.fillRect(x0, L.seatY + L.seatH - 3, ww, 3);
+
+  // ── Floor ──
+  const floor = ctx.createLinearGradient(0, L.floorY, 0, h);
+  floor.addColorStop(0, '#4a4a4a');
+  floor.addColorStop(1, '#2e2e2e');
+  ctx.fillStyle = floor;
+  ctx.fillRect(0, L.floorY, w, h - L.floorY);
+  // anti-slip grooves
+  ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+  ctx.lineWidth = 1;
+  for (let gx = 0; gx < w; gx += 12) {
+    ctx.beginPath(); ctx.moveTo(gx, L.floorY); ctx.lineTo(gx, h); ctx.stroke();
+  }
+  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  ctx.fillRect(0, L.floorY, w, 1);
+
+  // ── Vertical grab poles ──
+  for (const px of [x0 + ww * 0.02, x1 - ww * 0.02]) {
+    const pole = ctx.createLinearGradient(px - 4, 0, px + 4, 0);
+    pole.addColorStop(0, '#8a8d92');
+    pole.addColorStop(0.5, '#e8ebee');
+    pole.addColorStop(1, '#7a7d82');
+    ctx.fillStyle = pole;
+    ctx.fillRect(px - 3, L.ceilingH, 6, L.floorY - L.ceilingH);
+  }
+
+  // Subtle wear/grime on lower wall
+  weatherStreaks(ctx, x0, L.adY, ww, L.seatY - L.adY, 16, 'rgba(60,55,45,1)');
+
+  // Vignette
+  const vig = ctx.createRadialGradient(w / 2, h * 0.45, h * 0.3, w / 2, h * 0.5, w * 0.7);
+  vig.addColorStop(0, 'transparent');
+  vig.addColorStop(1, 'rgba(0,0,0,0.30)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, w, h);
+}
+
+function generateSubwayMask(ctx, w, h) {
+  ctx.clearRect(0, 0, w, h);
+  const L = subwayLayout(w, h);
+  const x0 = L.inset, ww = w - L.inset * 2;
+  ctx.fillStyle = '#00FF00';
+  // Ad strip + window row are paintable
+  ctx.fillRect(x0, L.adY, ww, L.adH);
+  ctx.fillRect(x0, L.winY, ww, L.winH);
 }
 
 // ══════════════════════════════════
