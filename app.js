@@ -28,6 +28,7 @@ const SURFACES = {
   freight:   { label: 'Freight Boxcar',  generate: generateFreightSurface,   mask: generateFreightMask },
   billboard: { label: 'City Billboard',  generate: generateBillboardSurface, mask: generateBillboardMask },
   overpass:  { label: 'Highway Overpass', generate: generateOverpassSurface,  mask: generateOverpassMask },
+  watertower:{ label: 'Water Tower',      generate: generateWaterTowerSurface, mask: generateWaterTowerMask },
 };
 
 // ── App state ──
@@ -1390,6 +1391,211 @@ function generateOverpassMask(ctx, w, h) {
   const L = overpassLayout(w, h);
   ctx.fillStyle = '#00FF00';
   ctx.fillRect(L.wallX, L.wallY, L.wallW, L.wallH);
+}
+
+// ── WATER TOWER SURFACE (procedural elevated tank) ──
+
+// Shared layout so the mask matches the tank body exactly
+function waterTowerLayout(w, h) {
+  const tankX = w * 0.24, tankW = w * 0.52;
+  const tankY = h * 0.18, tankH = h * 0.34;   // cylindrical body (paint zone)
+  return { tankX, tankW, tankY, tankH, groundY: h * 0.84 };
+}
+
+function generateWaterTowerSurface(ctx, w, h) {
+  const L = waterTowerLayout(w, h);
+  const cx = L.tankX + L.tankW / 2;
+
+  // ── Sky ──
+  const sky = ctx.createLinearGradient(0, 0, 0, L.groundY);
+  sky.addColorStop(0, '#1d2b3a');
+  sky.addColorStop(0.45, '#2f4456');
+  sky.addColorStop(0.8, '#546a78');
+  sky.addColorStop(1, '#7d8a92');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, w, L.groundY);
+
+  // Sun haze low on horizon
+  const haze = ctx.createRadialGradient(w * 0.5, L.groundY, 0, w * 0.5, L.groundY, w * 0.55);
+  haze.addColorStop(0, 'rgba(255,200,150,0.18)');
+  haze.addColorStop(1, 'transparent');
+  ctx.fillStyle = haze;
+  ctx.fillRect(0, L.groundY - h * 0.3, w, h * 0.3);
+
+  // Drifting clouds
+  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  for (let i = 0; i < 5; i++) {
+    const clx = (i * 137) % w, cly = h * (0.1 + (i % 3) * 0.12);
+    ctx.beginPath();
+    ctx.ellipse(clx, cly, 60 + i * 12, 14 + i * 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // ── Support legs (4 splayed, behind tank) ──
+  const legTop = L.tankY + L.tankH + h * 0.06;
+  const legSpread = L.tankW * 0.62;
+  ctx.strokeStyle = '#3a3f44';
+  ctx.lineWidth = Math.max(4, w * 0.008);
+  const legXs = [cx - legSpread, cx - legSpread * 0.34, cx + legSpread * 0.34, cx + legSpread];
+  const legTopXs = [cx - L.tankW * 0.32, cx - L.tankW * 0.12, cx + L.tankW * 0.12, cx + L.tankW * 0.32];
+  for (let i = 0; i < 4; i++) {
+    ctx.beginPath();
+    ctx.moveTo(legTopXs[i], legTop);
+    ctx.lineTo(legXs[i], L.groundY);
+    ctx.stroke();
+  }
+  // Cross bracing (X patterns between legs)
+  ctx.strokeStyle = '#33383d';
+  ctx.lineWidth = Math.max(2, w * 0.004);
+  for (let band = 0; band < 2; band++) {
+    const t0 = 0.3 + band * 0.35, t1 = 0.65 + band * 0.35;
+    for (let i = 0; i < 3; i++) {
+      const ax0 = legTopXs[i] + (legXs[i] - legTopXs[i]) * t0, ay0 = legTop + (L.groundY - legTop) * t0;
+      const bx0 = legTopXs[i+1] + (legXs[i+1] - legTopXs[i+1]) * t1, by0 = legTop + (L.groundY - legTop) * t1;
+      const ax1 = legTopXs[i+1] + (legXs[i+1] - legTopXs[i+1]) * t0, ay1 = ay0;
+      const bx1 = legTopXs[i] + (legXs[i] - legTopXs[i]) * t1, by1 = by0;
+      ctx.beginPath(); ctx.moveTo(ax0, ay0); ctx.lineTo(bx0, by0); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ax1, ay1); ctx.lineTo(bx1, by1); ctx.stroke();
+    }
+  }
+  // Horizontal strut ring
+  ctx.strokeStyle = '#3a3f44';
+  ctx.lineWidth = Math.max(3, w * 0.005);
+  const ringT = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(legTopXs[0] + (legXs[0]-legTopXs[0])*ringT, legTop + (L.groundY-legTop)*ringT);
+  ctx.lineTo(legTopXs[3] + (legXs[3]-legTopXs[3])*ringT, legTop + (L.groundY-legTop)*ringT);
+  ctx.stroke();
+
+  // ── Conical roof ──
+  const roofApexY = L.tankY - h * 0.10;
+  const roof = ctx.createLinearGradient(L.tankX, roofApexY, L.tankX + L.tankW, L.tankY);
+  roof.addColorStop(0, '#4a5560');
+  roof.addColorStop(0.5, '#6a7884');
+  roof.addColorStop(1, '#3e4750');
+  ctx.fillStyle = roof;
+  ctx.beginPath();
+  ctx.moveTo(cx, roofApexY);
+  ctx.lineTo(L.tankX - w * 0.01, L.tankY + 4);
+  ctx.lineTo(L.tankX + L.tankW + w * 0.01, L.tankY + 4);
+  ctx.closePath();
+  ctx.fill();
+  // Roof seams
+  ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+  ctx.lineWidth = 1;
+  for (let i = 1; i < 5; i++) {
+    const fx = L.tankX + (L.tankW) * (i / 5);
+    ctx.beginPath(); ctx.moveTo(cx, roofApexY); ctx.lineTo(fx, L.tankY + 3); ctx.stroke();
+  }
+  // Finial
+  ctx.fillStyle = '#888';
+  ctx.fillRect(cx - 2, roofApexY - 10, 4, 12);
+  ctx.beginPath(); ctx.arc(cx, roofApexY - 12, 4, 0, Math.PI * 2); ctx.fill();
+
+  // ── Tapered bottom (cone under tank) ──
+  const botY = L.tankY + L.tankH;
+  const taper = ctx.createLinearGradient(L.tankX, botY, L.tankX + L.tankW, botY);
+  taper.addColorStop(0, '#454a50');
+  taper.addColorStop(0.5, '#5e656c');
+  taper.addColorStop(1, '#3c4046');
+  ctx.fillStyle = taper;
+  ctx.beginPath();
+  ctx.moveTo(L.tankX, botY - 2);
+  ctx.lineTo(L.tankX + L.tankW, botY - 2);
+  ctx.lineTo(cx + L.tankW * 0.12, legTop);
+  ctx.lineTo(cx - L.tankW * 0.12, legTop);
+  ctx.closePath();
+  ctx.fill();
+
+  // ── Tank body (curved paint surface) ──
+  const body = ctx.createLinearGradient(L.tankX, 0, L.tankX + L.tankW, 0);
+  body.addColorStop(0, '#5a626a');     // shaded left edge
+  body.addColorStop(0.18, '#7a838c');
+  body.addColorStop(0.5, '#9aa3ac');   // lit center (curvature highlight)
+  body.addColorStop(0.82, '#79828b');
+  body.addColorStop(1, '#565d64');     // shaded right edge
+  ctx.fillStyle = body;
+  ctx.fillRect(L.tankX, L.tankY, L.tankW, L.tankH);
+
+  // Top & bottom rim ellipse shading
+  ctx.fillStyle = 'rgba(0,0,0,0.12)';
+  ctx.fillRect(L.tankX, L.tankY, L.tankW, 3);
+  ctx.fillStyle = 'rgba(0,0,0,0.18)';
+  ctx.fillRect(L.tankX, botY - 4, L.tankW, 4);
+
+  // Horizontal weld bands
+  ctx.strokeStyle = 'rgba(0,0,0,0.10)';
+  ctx.lineWidth = 1;
+  for (let i = 1; i < 3; i++) {
+    const by = L.tankY + (L.tankH / 3) * i;
+    ctx.beginPath(); ctx.moveTo(L.tankX, by); ctx.lineTo(L.tankX + L.tankW, by); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.beginPath(); ctx.moveTo(L.tankX, by + 1); ctx.lineTo(L.tankX + L.tankW, by + 1); ctx.stroke();
+    ctx.strokeStyle = 'rgba(0,0,0,0.10)';
+  }
+
+  // Vertical plate seams with rivets
+  for (let i = 1; i < 5; i++) {
+    const sx = L.tankX + (L.tankW / 5) * i;
+    ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+    ctx.beginPath(); ctx.moveTo(sx, L.tankY); ctx.lineTo(sx, botY); ctx.stroke();
+    ctx.fillStyle = 'rgba(0,0,0,0.12)';
+    for (let ry = L.tankY + 8; ry < botY; ry += 18) {
+      ctx.beginPath(); ctx.arc(sx, ry, 1.2, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  // Metal grain
+  applyNoise(ctx, Math.floor(L.tankX), Math.floor(L.tankY), Math.floor(L.tankW), Math.floor(L.tankH), 10);
+
+  // Rust streaks running down
+  weatherStreaks(ctx, L.tankX, L.tankY, L.tankW, L.tankH, 26, 'rgba(90,50,25,1)');
+
+  // Faded town name (stencil)
+  ctx.fillStyle = 'rgba(40,45,50,0.18)';
+  ctx.font = `bold ${Math.floor(L.tankH * 0.22)}px "Arial", sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('SPRINGDALE', cx, L.tankY + L.tankH * 0.58);
+  ctx.textAlign = 'start';
+
+  // Catwalk railing around tank base
+  ctx.strokeStyle = '#33383d';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(L.tankX - 4, botY); ctx.lineTo(L.tankX + L.tankW + 4, botY); ctx.stroke();
+  for (let x = L.tankX; x <= L.tankX + L.tankW; x += L.tankW / 12) {
+    ctx.beginPath(); ctx.moveTo(x, botY); ctx.lineTo(x, botY + 7); ctx.stroke();
+  }
+
+  // ── Ground ──
+  const grd = ctx.createLinearGradient(0, L.groundY, 0, h);
+  grd.addColorStop(0, '#3a3a30');
+  grd.addColorStop(0.3, '#2e2e26');
+  grd.addColorStop(1, '#1a1a14');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, L.groundY, w, h - L.groundY);
+  ctx.fillStyle = 'rgba(255,255,255,0.04)';
+  ctx.fillRect(0, L.groundY, w, 1);
+  // grass/dirt speckle
+  for (let i = 0; i < 300; i++) {
+    const gx = Math.random() * w, gy = L.groundY + 4 + Math.random() * (h - L.groundY - 4);
+    const s = 35 + Math.floor(Math.random() * 25);
+    ctx.fillStyle = `rgb(${s},${s + 6},${s - 8})`;
+    ctx.fillRect(gx, gy, 1 + Math.random() * 2, 1);
+  }
+
+  // Vignette
+  const vig = ctx.createRadialGradient(w / 2, h * 0.42, h * 0.28, w / 2, h * 0.5, w * 0.72);
+  vig.addColorStop(0, 'transparent');
+  vig.addColorStop(1, 'rgba(0,0,0,0.32)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, w, h);
+}
+
+function generateWaterTowerMask(ctx, w, h) {
+  ctx.clearRect(0, 0, w, h);
+  const L = waterTowerLayout(w, h);
+  ctx.fillStyle = '#00FF00';
+  ctx.fillRect(L.tankX, L.tankY, L.tankW, L.tankH);
 }
 
 // ══════════════════════════════════
