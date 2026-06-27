@@ -27,6 +27,7 @@ const SURFACES = {
   wall:      { label: 'Brick Wall',      generate: generateWallSurface,      mask: generateWallMask },
   freight:   { label: 'Freight Boxcar',  generate: generateFreightSurface,   mask: generateFreightMask },
   billboard: { label: 'City Billboard',  generate: generateBillboardSurface, mask: generateBillboardMask },
+  overpass:  { label: 'Highway Overpass', generate: generateOverpassSurface,  mask: generateOverpassMask },
 };
 
 // ── App state ──
@@ -1220,6 +1221,177 @@ function generateBillboardMask(ctx, w, h) {
   ctx.fillRect(bbX, bbY, bbW, bbH);
 }
 
+// ── HIGHWAY OVERPASS SURFACE (procedural concrete) ──
+
+// Shared layout so the mask matches the drawing exactly
+function overpassLayout(w, h) {
+  return {
+    deckY: h * 0.06, deckH: h * 0.13,           // overpass deck + girder
+    wallX: w * 0.08, wallY: h * 0.19,           // big concrete abutment wall (paint zone)
+    wallW: w * 0.84, wallH: h * 0.61,
+    groundY: h * 0.80,
+  };
+}
+
+function generateOverpassSurface(ctx, w, h) {
+  const L = overpassLayout(w, h);
+
+  // ── Dusk sky behind the structure ──
+  const sky = ctx.createLinearGradient(0, 0, 0, L.deckY + L.deckH);
+  sky.addColorStop(0, '#2a2030');
+  sky.addColorStop(0.5, '#3a2c38');
+  sky.addColorStop(1, '#4a3a40');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, w, L.deckY + L.deckH);
+
+  // Distant city haze glow
+  const glow = ctx.createRadialGradient(w * 0.7, L.deckY, 0, w * 0.7, L.deckY, w * 0.5);
+  glow.addColorStop(0, 'rgba(255,160,90,0.12)');
+  glow.addColorStop(1, 'transparent');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, w, L.deckY + L.deckH);
+
+  // ── Overpass deck girder (spans full width) ──
+  const girder = ctx.createLinearGradient(0, L.deckY, 0, L.deckY + L.deckH);
+  girder.addColorStop(0, '#8a8a8a');
+  girder.addColorStop(0.1, '#9a9a96');
+  girder.addColorStop(0.5, '#82827e');
+  girder.addColorStop(1, '#6a6a66');
+  ctx.fillStyle = girder;
+  ctx.fillRect(0, L.deckY, w, L.deckH);
+
+  // Guardrail posts on top of deck
+  ctx.fillStyle = '#5a5a58';
+  for (let x = 6; x < w; x += 34) ctx.fillRect(x, L.deckY - 10, 4, 11);
+  // Guardrail beam
+  ctx.fillStyle = '#777';
+  ctx.fillRect(0, L.deckY - 11, w, 4);
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  ctx.fillRect(0, L.deckY - 11, w, 1);
+
+  // Deck shadow casting onto wall
+  ctx.fillStyle = 'rgba(0,0,0,0.28)';
+  ctx.fillRect(0, L.deckY + L.deckH, w, 10);
+
+  // ── Support pillars (left + right) ──
+  const pillarW = w * 0.09;
+  for (const px of [L.wallX - pillarW * 0.4, L.wallX + L.wallW - pillarW * 0.6]) {
+    const pg = ctx.createLinearGradient(px, 0, px + pillarW, 0);
+    pg.addColorStop(0, '#6e6e6a');
+    pg.addColorStop(0.3, '#86867f');
+    pg.addColorStop(0.6, '#79796f');
+    pg.addColorStop(1, '#5e5e58');
+    ctx.fillStyle = pg;
+    ctx.fillRect(px, L.wallY, pillarW, L.groundY - L.wallY + h * 0.04);
+    // edge shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.12)';
+    ctx.fillRect(px + pillarW - 2, L.wallY, 2, L.groundY - L.wallY);
+  }
+
+  // ── Main concrete abutment wall (paint surface) ──
+  const wall = ctx.createLinearGradient(0, L.wallY, 0, L.wallY + L.wallH);
+  wall.addColorStop(0, '#9a9a93');
+  wall.addColorStop(0.04, '#a2a29a');
+  wall.addColorStop(0.4, '#94948c');
+  wall.addColorStop(0.8, '#8a8a82');
+  wall.addColorStop(1, '#7c7c74');
+  ctx.fillStyle = wall;
+  ctx.fillRect(L.wallX, L.wallY, L.wallW, L.wallH);
+
+  // Concrete form-panel seams (vertical)
+  ctx.strokeStyle = 'rgba(0,0,0,0.10)';
+  ctx.lineWidth = 1;
+  const panels = 4;
+  for (let i = 1; i < panels; i++) {
+    const x = L.wallX + (L.wallW / panels) * i;
+    ctx.beginPath(); ctx.moveTo(x, L.wallY); ctx.lineTo(x, L.wallY + L.wallH); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.beginPath(); ctx.moveTo(x + 1, L.wallY); ctx.lineTo(x + 1, L.wallY + L.wallH); ctx.stroke();
+    ctx.strokeStyle = 'rgba(0,0,0,0.10)';
+  }
+  // Horizontal pour line
+  const pourY = L.wallY + L.wallH * 0.5;
+  ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+  ctx.beginPath(); ctx.moveTo(L.wallX, pourY); ctx.lineTo(L.wallX + L.wallW, pourY); ctx.stroke();
+
+  // Form-tie holes (grid of small recesses)
+  ctx.fillStyle = 'rgba(0,0,0,0.18)';
+  for (let gy = L.wallY + L.wallH * 0.18; gy < L.wallY + L.wallH; gy += L.wallH * 0.32) {
+    for (let gx = L.wallX + L.wallW * 0.12; gx < L.wallX + L.wallW; gx += L.wallW * 0.25) {
+      ctx.beginPath(); ctx.arc(gx, gy, 2, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  // Concrete grain
+  applyNoise(ctx, Math.floor(L.wallX), Math.floor(L.wallY), Math.floor(L.wallW), Math.floor(L.wallH), 12);
+
+  // Weathering — rust/water streaks down the wall
+  weatherStreaks(ctx, L.wallX, L.wallY, L.wallW, L.wallH, 30, 'rgba(50,40,30,1)');
+
+  // Efflorescence / stains
+  for (let i = 0; i < 14; i++) {
+    const sx = L.wallX + Math.random() * L.wallW;
+    const sy = L.wallY + Math.random() * L.wallH;
+    const sr = 14 + Math.random() * 40;
+    const st = ctx.createRadialGradient(sx, sy, 0, sx, sy, sr);
+    st.addColorStop(0, Math.random() > 0.5 ? 'rgba(0,0,0,0.05)' : 'rgba(230,230,225,0.05)');
+    st.addColorStop(1, 'transparent');
+    ctx.fillStyle = st;
+    ctx.fillRect(sx - sr, sy - sr, sr * 2, sr * 2);
+  }
+
+  // Grime gradient at the base of the wall
+  const grime = ctx.createLinearGradient(0, L.wallY + L.wallH - 50, 0, L.wallY + L.wallH);
+  grime.addColorStop(0, 'transparent');
+  grime.addColorStop(1, 'rgba(30,28,24,0.3)');
+  ctx.fillStyle = grime;
+  ctx.fillRect(L.wallX, L.wallY + L.wallH - 50, L.wallW, 50);
+
+  // ── Ground / road ──
+  const road = ctx.createLinearGradient(0, L.groundY, 0, h);
+  road.addColorStop(0, '#2c2c30');
+  road.addColorStop(0.2, '#242428');
+  road.addColorStop(1, '#1a1a1e');
+  ctx.fillStyle = road;
+  ctx.fillRect(0, L.groundY, w, h - L.groundY);
+
+  // Curb line
+  ctx.fillStyle = '#3a3a3e';
+  ctx.fillRect(0, L.groundY, w, 5);
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  ctx.fillRect(0, L.groundY, w, 1);
+
+  // Asphalt speckle
+  for (let i = 0; i < 400; i++) {
+    const gx = Math.random() * w;
+    const gy = L.groundY + 6 + Math.random() * (h - L.groundY - 6);
+    const s = 28 + Math.floor(Math.random() * 22);
+    ctx.fillStyle = `rgb(${s},${s},${s + 4})`;
+    ctx.fillRect(gx, gy, 1 + Math.random() * 2, 1);
+  }
+
+  // Faint road dashes receding
+  ctx.fillStyle = 'rgba(200,190,120,0.18)';
+  for (let i = 0; i < 4; i++) {
+    const dy = L.groundY + 20 + i * (h - L.groundY) * 0.22;
+    ctx.fillRect(w * 0.48, dy, w * 0.04, 5 + i * 2);
+  }
+
+  // Vignette
+  const vig = ctx.createRadialGradient(w / 2, h * 0.45, h * 0.25, w / 2, h * 0.5, w * 0.7);
+  vig.addColorStop(0, 'transparent');
+  vig.addColorStop(1, 'rgba(0,0,0,0.34)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, w, h);
+}
+
+function generateOverpassMask(ctx, w, h) {
+  ctx.clearRect(0, 0, w, h);
+  const L = overpassLayout(w, h);
+  ctx.fillStyle = '#00FF00';
+  ctx.fillRect(L.wallX, L.wallY, L.wallW, L.wallH);
+}
+
 // ══════════════════════════════════
 //  CANVAS MANAGEMENT
 // ══════════════════════════════════
@@ -1240,16 +1412,62 @@ function resizeCanvases() {
   drawGrid();
 }
 
+// Cache of loaded surface images; redraws when an image finishes loading
+const surfaceImages = {};
+function getSurfaceImage(src) {
+  if (surfaceImages[src]) return surfaceImages[src];
+  const img = new Image();
+  img.onload = () => { drawBackground(); buildMask(); repaintStrokes(); };
+  img.src = src;
+  surfaceImages[src] = img;
+  return img;
+}
+
+// "contain" letterbox rect for an image inside w×h
+function computeContainRect(iw, ih, w, h) {
+  const scale = Math.min(w / iw, h / ih);
+  const dw = iw * scale, dh = ih * scale;
+  return { x: (w - dw) / 2, y: (h - dh) / 2, w: dw, h: dh };
+}
+
 function drawBackground() {
   const w = bgCanvas.width, h = bgCanvas.height;
   bgCtx.clearRect(0, 0, w, h);
-  SURFACES[state.surface].generate(bgCtx, w, h);
+  const s = SURFACES[state.surface];
+
+  if (s.image) {
+    const img = getSurfaceImage(s.image);
+    bgCtx.fillStyle = '#0e0e12';
+    bgCtx.fillRect(0, 0, w, h);
+    if (img.complete && img.naturalWidth) {
+      const r = computeContainRect(img.naturalWidth, img.naturalHeight, w, h);
+      bgCtx.drawImage(img, r.x, r.y, r.w, r.h);
+    }
+    return;
+  }
+
+  s.generate(bgCtx, w, h);
 }
 
 function buildMask() {
   const w = maskCanvasEl.width, h = maskCanvasEl.height;
   maskCtx.clearRect(0, 0, w, h);
-  SURFACES[state.surface].mask(maskCtx, w, h);
+  const s = SURFACES[state.surface];
+
+  if (s.image) {
+    const img = getSurfaceImage(s.image);
+    if (img.complete && img.naturalWidth) {
+      const r = computeContainRect(img.naturalWidth, img.naturalHeight, w, h);
+      maskCtx.fillStyle = '#00FF00';
+      for (const z of s.paintZones) {
+        maskCtx.fillRect(r.x + z.x * r.w, r.y + z.y * r.h, z.w * r.w, z.h * r.h);
+      }
+    }
+    maskData = maskCtx.getImageData(0, 0, w, h);
+    return;
+  }
+
+  s.mask(maskCtx, w, h);
   maskData = maskCtx.getImageData(0, 0, w, h);
 }
 
