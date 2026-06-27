@@ -1,0 +1,9 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
+    { "source": "/blog", "destination": "/blog/index.html" },
+    { "source": "/blog/:category", "destination": "/blog/category.html" },
+    { "source": "/blog/:category/:slug", "destination": "/blog/post.html" }
+  ]
+}

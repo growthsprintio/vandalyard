@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vandal Yard Blog</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="blog-page">
+  <div id="app">
+
+    <header id="topbar">
+      <div class="topbar-left">
+        <a href="/index.html" style="text-decoration:none"><h1>VANDAL YARD</h1></a>
+        <span class="tagline">blog</span>
+      </div>
+      <nav class="topbar-right">
+        <a href="/index.html" class="nav-link">THE WALL</a>
+        <a href="/blog" class="nav-link">BLOG</a>
+        <a href="/go-paint.html" class="nav-link nav-go-paint">GO PAINT</a>
+      </nav>
+    </header>
+
+    <div class="blog-wrap article-wrap">
+      <nav id="breadcrumbs" class="breadcrumbs" aria-label="Breadcrumb"></nav>
+
+      <article id="article" class="article hidden">
+        <header class="article-head">
+          <a id="artCat" class="article-cat" href="#"></a>
+          <h1 id="artTitle" class="article-title"></h1>
+          <div class="article-meta">
+            <span id="artAuthor"></span>
+            <span class="meta-dot">&middot;</span>
+            <time id="artDate"></time>
+          </div>
+        </header>
+
+        <img id="artImage" class="article-image hidden" alt="">
+
+        <div id="adTop"></div>
+
+        <div id="artBody" class="article-body"></div>
+
+        <div id="adBottom"></div>
+
+        <div id="artTags" class="article-tags"></div>
+      </article>
+
+      <div id="notFound" class="blog-empty hidden">
+        <p>That post doesn't exist (or isn't published yet).</p>
+        <p><a class="text-link" href="/blog">← Back to the blog</a></p>
+      </div>
+
+      <section id="related" class="related hidden">
+        <h3 class="related-title">More from this category</h3>
+        <div id="relatedGrid" class="post-grid"></div>
+      </section>
+    </div>
+
+  </div>
+
+  <script src="/supabase.js"></script>
+  <script src="/blog-common.js"></script>
+  <script src="/blog-post.js"></script>
+  <script src="/footer.js"></script>
+</body>
+</html>

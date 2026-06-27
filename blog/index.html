@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog — Vandal Yard</title>
+  <meta name="description" content="Graffiti culture, digital art tips, and stories from the Vandal Yard — a free, anonymous place to paint.">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="blog-page">
+  <div id="app">
+
+    <header id="topbar">
+      <div class="topbar-left">
+        <a href="/index.html" style="text-decoration:none"><h1>VANDAL YARD</h1></a>
+        <span class="tagline">blog</span>
+      </div>
+      <nav class="topbar-right">
+        <a href="/index.html" class="nav-link">THE WALL</a>
+        <a href="/blog" class="nav-link active">BLOG</a>
+        <a href="/go-paint.html" class="nav-link nav-go-paint">GO PAINT</a>
+      </nav>
+    </header>
+
+    <div class="blog-wrap">
+      <div class="blog-hero">
+        <h2>THE YARD JOURNAL</h2>
+        <p>Graffiti culture, digital art technique, and dispatches from the wall.</p>
+      </div>
+
+      <nav id="categoryChips" class="category-chips" aria-label="Categories"></nav>
+
+      <div id="adTop"></div>
+
+      <div id="postGrid" class="post-grid"></div>
+      <div id="blogEmpty" class="blog-empty hidden">No posts yet — check back soon.</div>
+    </div>
+
+  </div>
+
+  <script src="/supabase.js"></script>
+  <script src="/blog-common.js"></script>
+  <script src="/blog-index.js"></script>
+  <script src="/footer.js"></script>
+</body>
+</html>

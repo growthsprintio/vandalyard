@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog CMS — Vandal Yard Admin</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    body.cms-page { overflow-y: auto; }
+    .cms-page #app { height: auto; min-height: 100vh; }
+
+    .cms-login { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:70vh; gap:16px; }
+    .cms-login h2 { font-family:'Space Grotesk',sans-serif; letter-spacing:3px; color:#ddd; }
+    .cms-login input { background:#303134; border:none; border-radius:20px; color:#e8eaed; padding:10px 18px; width:260px; text-align:center; font-family:inherit; }
+    .cms-login button { background:#8ab4f8; color:#202124; border:none; border-radius:20px; padding:10px 32px; font-weight:600; letter-spacing:1px; cursor:pointer; font-family:inherit; }
+    .cms-login .err { color:#f28b82; font-size:12px; min-height:16px; }
+
+    .cms-wrap { max-width: 1100px; margin: 0 auto; padding: 20px; width:100%; }
+    .cms-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px; }
+    .cms-head h2 { font-family:'Space Grotesk',sans-serif; letter-spacing:2px; color:#ddd; font-size:20px; }
+    .cms-btn { background:#303134; color:#e8eaed; border:none; border-radius:20px; padding:9px 18px; font-weight:500; letter-spacing:.5px; cursor:pointer; font-family:inherit; font-size:12px; }
+    .cms-btn:hover { background:#3c4043; }
+    .cms-btn-primary { background:#34a853; color:#fff; }
+    .cms-btn-primary:hover { background:#46b865; }
+    .cms-btn-blue { background:#8ab4f8; color:#202124; }
+    .cms-btn-blue:hover { background:#aecbfa; }
+    .cms-btn-danger { background:#5f2120; color:#f28b82; }
+    .cms-btn-danger:hover { background:#8b3330; }
+
+    /* Post list */
+    .cms-list { display:flex; flex-direction:column; gap:8px; }
+    .cms-row { display:flex; align-items:center; gap:14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:10px 14px; }
+    .cms-row-thumb { width:90px; height:54px; object-fit:cover; border-radius:8px; background:#08080a; flex-shrink:0; }
+    .cms-row-info { flex:1; min-width:0; }
+    .cms-row-title { color:#e8eaed; font-weight:600; font-size:14px; }
+    .cms-row-meta { color:#9aa0a6; font-size:11px; margin-top:3px; }
+    .cms-badge { display:inline-block; padding:1px 8px; border-radius:10px; font-size:10px; font-weight:600; letter-spacing:.5px; margin-right:6px; }
+    .badge-published { background:#1e3a24; color:#7ee2a0; }
+    .badge-draft { background:#3a3a3a; color:#bbb; }
+    .badge-scheduled { background:#3a3320; color:#e8c45a; }
+
+    /* Editor */
+    .cms-editor { display:grid; grid-template-columns: 1fr 340px; gap:20px; }
+    @media (max-width: 860px){ .cms-editor { grid-template-columns:1fr; } }
+    .cms-field { margin-bottom:14px; }
+    .cms-field label { display:block; font-size:10px; font-weight:700; letter-spacing:1.5px; color:#888; text-transform:uppercase; margin-bottom:5px; }
+    .cms-field input[type=text], .cms-field input[type=datetime-local], .cms-field textarea, .cms-field select {
+      width:100%; background:#1e1e22; border:1px solid #333; border-radius:8px; color:#e8eaed; padding:9px 11px; font-family:inherit; font-size:13px;
+    }
+    .cms-field textarea { resize:vertical; }
+    .cms-field input:focus, .cms-field textarea:focus, .cms-field select:focus { outline:none; border-color:#8ab4f8; }
+    .cms-hint { font-size:11px; color:#666; margin-top:3px; }
+    .char-count { font-size:11px; color:#888; float:right; }
+    .char-ok { color:#7ee2a0; } .char-warn { color:#e8c45a; } .char-bad { color:#f28b82; }
+
+    .cms-side-card { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:14px; margin-bottom:16px; }
+    .cms-side-card h4 { font-size:11px; letter-spacing:1.5px; color:#9aa0a6; text-transform:uppercase; margin-bottom:10px; }
+
+    /* Editor toolbar */
+    .editor-toolbar { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:6px; }
+    .editor-toolbar button { background:#2a2a2e; color:#ccc; border:1px solid #333; border-radius:6px; padding:4px 9px; font-size:12px; cursor:pointer; font-family:inherit; }
+    .editor-toolbar button:hover { background:#3c4043; }
+
+    /* SEO preview (Google) */
+    .serp { background:#fff; border-radius:8px; padding:12px 14px; }
+    .serp-url { color:#202124; font-size:12px; }
+    .serp-title { color:#1a0dab; font-size:18px; line-height:1.3; margin:2px 0; }
+    .serp-desc { color:#4d5156; font-size:13px; line-height:1.4; }
+
+    /* OG preview */
+    .og-card { background:#1e1e22; border:1px solid #333; border-radius:8px; overflow:hidden; }
+    .og-card-img { width:100%; height:140px; object-fit:cover; background:#08080a; display:block; }
+    .og-card-body { padding:10px 12px; }
+    .og-card-host { font-size:11px; color:#888; text-transform:uppercase; }
+    .og-card-title { font-size:14px; color:#e8eaed; font-weight:600; margin:2px 0; }
+    .og-card-desc { font-size:12px; color:#9aa0a6; }
+
+    .thumb-preview { width:100%; height:120px; object-fit:cover; border-radius:8px; background:#08080a; margin-top:8px; display:block; }
+    .status-row { display:flex; gap:8px; align-items:center; }
+    .hidden { display:none !important; }
+  </style>
+</head>
+<body class="cms-page">
+  <div id="app">
+    <header id="topbar">
+      <div class="topbar-left">
+        <a href="/index.html" style="text-decoration:none"><h1>VANDAL YARD</h1></a>
+        <span class="tagline">blog cms</span>
+      </div>
+      <nav class="topbar-right">
+        <a href="/blog" class="nav-link">BLOG</a>
+        <a href="/admin.html" class="nav-link">WALL ADMIN</a>
+      </nav>
+    </header>
+
+    <!-- Login -->
+    <div id="loginGate" class="cms-login">
+      <h2>BLOG CMS LOGIN</h2>
+      <input type="password" id="pass" placeholder="Password" autocomplete="off">
+      <button id="loginBtn">LOG IN</button>
+      <div id="loginErr" class="err"></div>
+    </div>
+
+    <!-- Post list view -->
+    <div id="listView" class="cms-wrap hidden">
+      <div class="cms-head">
+        <h2>BLOG POSTS</h2>
+        <div>
+          <button id="newPostBtn" class="cms-btn cms-btn-blue">+ NEW POST</button>
+          <button id="logoutBtn" class="cms-btn">LOG OUT</button>
+        </div>
+      </div>
+      <div id="postList" class="cms-list"></div>
+      <div id="listEmpty" class="blog-empty hidden">No posts yet. Create your first one.</div>
+    </div>
+
+    <!-- Editor view -->
+    <div id="editView" class="cms-wrap hidden">
+      <div class="cms-head">
+        <h2 id="editorTitle">NEW POST</h2>
+        <div>
+          <button id="backBtn" class="cms-btn">← BACK</button>
+          <button id="saveDraftBtn" class="cms-btn">SAVE DRAFT</button>
+          <button id="publishBtn" class="cms-btn cms-btn-primary">PUBLISH</button>
+        </div>
+      </div>
+
+      <div class="cms-editor">
+        <!-- Main column -->
+        <div>
+          <div class="cms-field">
+            <label>Post Title</label>
+            <input type="text" id="f_title" placeholder="How to Throw a Clean Fill">
+          </div>
+
+          <div class="cms-field">
+            <label>Body (HTML)</label>
+            <div class="editor-toolbar">
+              <button data-wrap="h2">H2</button>
+              <button data-wrap="h3">H3</button>
+              <button data-wrap="p">P</button>
+              <button data-wrap="strong">B</button>
+              <button data-wrap="em">i</button>
+              <button data-wrap="blockquote">❝</button>
+              <button data-wrap="ul">• List</button>
+              <button data-link="1">🔗 Link</button>
+            </div>
+            <textarea id="f_body" rows="16" placeholder="<p>Write your post in HTML…</p>"></textarea>
+            <div class="cms-hint">Tip: use &lt;h2&gt; subheadings and internal links to other posts/the wall for SEO.</div>
+          </div>
+
+          <div class="cms-field">
+            <label>Excerpt <span class="cms-hint">(used in cards + fallback meta description)</span></label>
+            <textarea id="f_excerpt" rows="2" placeholder="One or two punchy sentences."></textarea>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div>
+          <div class="cms-side-card">
+            <h4>Publish</h4>
+            <div class="cms-field">
+              <label>Status</label>
+              <select id="f_status">
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+                <option value="scheduled">Scheduled</option>
+              </select>
+            </div>
+            <div class="cms-field">
+              <label>Publish Date</label>
+              <input type="datetime-local" id="f_publish_date">
+              <div class="cms-hint">For scheduled posts, this is when it goes live.</div>
+            </div>
+            <div class="cms-field">
+              <label>Author</label>
+              <input type="text" id="f_author" value="Anonymous">
+            </div>
+          </div>
+
+          <div class="cms-side-card">
+            <h4>Organize</h4>
+            <div class="cms-field">
+              <label>Category</label>
+              <input type="text" id="f_category" placeholder="culture" list="catList">
+              <datalist id="catList"></datalist>
+              <div class="cms-hint">Becomes the URL: /blog/<b id="catEcho">category</b>/slug</div>
+            </div>
+            <div class="cms-field">
+              <label>Slug</label>
+              <input type="text" id="f_slug" placeholder="how-to-throw-a-clean-fill">
+            </div>
+            <div class="cms-field">
+              <label>Tags <span class="cms-hint">(comma separated)</span></label>
+              <input type="text" id="f_tags" placeholder="fills, technique, beginners">
+            </div>
+          </div>
+
+          <div class="cms-side-card">
+            <h4>Featured Image</h4>
+            <div class="cms-field">
+              <input type="file" id="f_image_file" accept="image/*" style="font-size:12px;color:#aaa;">
+              <input type="text" id="f_featured_image" placeholder="…or paste an image URL" style="margin-top:8px;">
+            </div>
+            <div class="cms-field">
+              <label>Image Alt Text</label>
+              <input type="text" id="f_featured_alt" placeholder="Describe the image for SEO/accessibility">
+            </div>
+            <img id="thumbPreview" class="thumb-preview hidden" alt="preview">
+          </div>
+
+          <div class="cms-side-card">
+            <h4>SEO — Google Preview</h4>
+            <div class="serp">
+              <div class="serp-url" id="serpUrl">vandalyard.vercel.app › blog</div>
+              <div class="serp-title" id="serpTitle">Post title</div>
+              <div class="serp-desc" id="serpDesc">Meta description preview…</div>
+            </div>
+            <div class="cms-field" style="margin-top:12px;">
+              <label>Meta Title <span class="char-count" id="mtCount"></span></label>
+              <input type="text" id="f_meta_title" placeholder="Defaults to post title">
+            </div>
+            <div class="cms-field">
+              <label>Meta Description <span class="char-count" id="mdCount"></span></label>
+              <textarea id="f_meta_description" rows="3" placeholder="Defaults to excerpt"></textarea>
+            </div>
+            <div class="cms-field">
+              <label>Canonical URL <span class="cms-hint">(optional)</span></label>
+              <input type="text" id="f_canonical_url" placeholder="Leave blank for default">
+            </div>
+          </div>
+
+          <div class="cms-side-card">
+            <h4>Social — Open Graph</h4>
+            <div class="og-card">
+              <img id="ogImg" class="og-card-img" alt="">
+              <div class="og-card-body">
+                <div class="og-card-host">vandalyard.vercel.app</div>
+                <div class="og-card-title" id="ogTitle">Post title</div>
+                <div class="og-card-desc" id="ogDesc">Description…</div>
+              </div>
+            </div>
+            <div class="cms-field" style="margin-top:12px;">
+              <label>OG Title</label>
+              <input type="text" id="f_og_title" placeholder="Defaults to meta/post title">
+            </div>
+            <div class="cms-field">
+              <label>OG Description</label>
+              <textarea id="f_og_description" rows="2" placeholder="Defaults to meta description"></textarea>
+            </div>
+            <div class="cms-field">
+              <label>OG Image URL</label>
+              <input type="text" id="f_og_image" placeholder="Defaults to featured image">
+            </div>
+          </div>
+
+          <button id="deleteBtn" class="cms-btn cms-btn-danger hidden" style="width:100%;">DELETE POST</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/supabase.js"></script>
+  <script src="/blog-common.js"></script>
+  <script src="/admin-blog.js"></script>
+</body>
+</html>

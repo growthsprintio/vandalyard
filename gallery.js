@@ -116,4 +116,10 @@ galleryGrid.addEventListener('click', e => {
   openLightboxById(piece.dataset.id);
 });
 
+// Clean ad slot on the wall (reserved space; fills only if AdSense is configured)
+if (typeof adSlot === 'function') {
+  const adEl = document.getElementById('galleryAd');
+  if (adEl) { adEl.innerHTML = adSlot('wall-bottom', 'Advertisement'); if (typeof initAds === 'function') initAds(); }
+}
+
 renderGallery();

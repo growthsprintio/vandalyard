@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Category — Vandal Yard Blog</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="blog-page">
+  <div id="app">
+
+    <header id="topbar">
+      <div class="topbar-left">
+        <a href="/index.html" style="text-decoration:none"><h1>VANDAL YARD</h1></a>
+        <span class="tagline">blog</span>
+      </div>
+      <nav class="topbar-right">
+        <a href="/index.html" class="nav-link">THE WALL</a>
+        <a href="/blog" class="nav-link">BLOG</a>
+        <a href="/go-paint.html" class="nav-link nav-go-paint">GO PAINT</a>
+      </nav>
+    </header>
+
+    <div class="blog-wrap">
+      <nav id="breadcrumbs" class="breadcrumbs" aria-label="Breadcrumb"></nav>
+
+      <div class="blog-hero">
+        <h2 id="catTitle">Category</h2>
+        <p id="catCount"></p>
+      </div>
+
+      <div id="adTop"></div>
+
+      <div id="postGrid" class="post-grid"></div>
+      <div id="blogEmpty" class="blog-empty hidden">No posts in this category yet.</div>
+    </div>
+
+  </div>
+
+  <script src="/supabase.js"></script>
+  <script src="/blog-common.js"></script>
+  <script src="/blog-category.js"></script>
+  <script src="/footer.js"></script>
+</body>
+</html>
