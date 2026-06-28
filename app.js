@@ -36,6 +36,8 @@ const SURFACES = {
 
 const state = {
   color: '#FFFFFF',
+  slots: ['#FFFFFF', '#FF0000', '#000000'], // primary, secondary, tertiary
+  activeSlot: 0,
   cap: 'medium',
   opacity: 0.85,
   brush: 'spray',
@@ -1886,6 +1888,29 @@ function drawGrid() {
 const paletteEl = document.getElementById('palette');
 const colorPicker = document.getElementById('colorPicker');
 const colorHex = document.getElementById('colorHex');
+const colorSlotsEl = document.getElementById('colorSlots');
+
+// Build the 3 color slots (primary / secondary / tertiary)
+function buildSlots() {
+  if (!colorSlotsEl) return;
+  const labels = ['P', 'S', 'T'];
+  colorSlotsEl.innerHTML = '';
+  state.slots.forEach((color, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'color-slot' + (i === state.activeSlot ? ' active' : '');
+    btn.dataset.slot = i;
+    btn.title = ['Primary', 'Secondary', 'Tertiary'][i] + ' color';
+    btn.innerHTML = `<span class="slot-sw" style="background:${color}"></span><span class="slot-label">${labels[i]}</span>`;
+    btn.addEventListener('click', () => setActiveSlot(i));
+    colorSlotsEl.appendChild(btn);
+  });
+}
+
+function setActiveSlot(i) {
+  state.activeSlot = i;
+  state.color = state.slots[i];
+  syncColorUI();
+}
 
 function buildPalette() {
   paletteEl.innerHTML = '';
@@ -1893,24 +1918,37 @@ function buildPalette() {
     const el = document.createElement('div');
     el.className = 'swatch' + (color === state.color ? ' active' : '');
     el.style.background = color;
-    el.addEventListener('click', () => selectColor(color, el));
+    el.dataset.color = color;
+    el.addEventListener('click', () => selectColor(color));
     paletteEl.appendChild(el);
   });
 }
 
-function selectColor(color, swatchEl) {
+// Picking a color fills the ACTIVE slot
+function selectColor(color) {
   state.color = color;
+  state.slots[state.activeSlot] = color;
+  syncColorUI();
+}
+
+// Keep slots, palette highlight, picker and hex in sync with the active color
+function syncColorUI() {
+  const color = state.color;
   colorPicker.value = color.length === 7 ? color : '#FF0000';
   colorHex.textContent = color;
-  document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
-  if (swatchEl) swatchEl.classList.add('active');
+  // active swatch in palette
+  document.querySelectorAll('.swatch').forEach(s =>
+    s.classList.toggle('active', (s.dataset.color || '').toUpperCase() === color.toUpperCase()));
+  // active slot + its swatch color
+  document.querySelectorAll('.color-slot').forEach((el, i) => {
+    el.classList.toggle('active', i === state.activeSlot);
+    const sw = el.querySelector('.slot-sw');
+    if (sw) sw.style.background = state.slots[i];
+  });
 }
 
 colorPicker.addEventListener('input', () => {
-  const c = colorPicker.value.toUpperCase();
-  state.color = c;
-  colorHex.textContent = c;
-  document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+  selectColor(colorPicker.value.toUpperCase());
 });
 
 // ══════════════════════════════════
@@ -2311,7 +2349,10 @@ async function submitPost() {
 // ══════════════════════════════════
 
 function init() {
+  state.color = state.slots[state.activeSlot];
+  buildSlots();
   buildPalette();
+  syncColorUI();
 
   // Canvas pointer events
   paintCanvas.addEventListener('mousedown', onPointerDown);
