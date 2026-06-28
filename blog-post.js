@@ -69,11 +69,22 @@
     img.classList.remove('hidden');
   }
 
-  document.getElementById('adTop').innerHTML = adSlot('blog-post-top', 'Advertisement');
+  const isDesktop = window.matchMedia('(min-width: 960px)').matches;
+
+  // Desktop: top ad lives in the sticky sidebar with the TOC.
+  // Mobile: keep the inline top ad placement.
+  if (isDesktop) {
+    document.getElementById('adSide').innerHTML = adSlot('blog-post-side', 'Advertisement');
+  } else {
+    document.getElementById('adTop').innerHTML = adSlot('blog-post-top', 'Advertisement');
+  }
   document.getElementById('adBottom').innerHTML = adSlot('blog-post-bottom', 'Advertisement');
 
   // Body: stored as HTML. Insert a mid-article ad after the 3rd block.
   document.getElementById('artBody').innerHTML = injectMidAd(post.body || '');
+
+  // Build the table of contents from headings (desktop sidebar)
+  buildTOC();
 
   // Tags
   if (post.tags && post.tags.length) {
@@ -93,6 +104,46 @@
   }
 
   initAds();
+
+  // Build a table of contents from h2/h3 headings in the article body
+  function buildTOC() {
+    const sidebar = document.getElementById('postSidebar');
+    const toc = document.getElementById('toc');
+    const headings = document.querySelectorAll('#artBody h2, #artBody h3');
+    if (headings.length < 2) {
+      // Not enough structure for a TOC — hide the card, keep the ad
+      document.querySelector('.toc-card')?.classList.add('hidden');
+      return;
+    }
+    let html = '';
+    headings.forEach((h, i) => {
+      const id = h.id || ('section-' + i);
+      h.id = id;
+      const level = h.tagName === 'H3' ? ' toc-sub' : '';
+      html += `<a href="#${id}" class="toc-link${level}" data-target="${id}">${escHtml(h.textContent)}</a>`;
+    });
+    toc.innerHTML = html;
+
+    // Smooth scroll + active highlight
+    toc.querySelectorAll('.toc-link').forEach(a => {
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        const el = document.getElementById(a.dataset.target);
+        if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth' });
+      });
+    });
+
+    const links = [...toc.querySelectorAll('.toc-link')];
+    const spy = () => {
+      let current = links[0];
+      headings.forEach((h, i) => {
+        if (h.getBoundingClientRect().top - 90 <= 0) current = links[i];
+      });
+      links.forEach(l => l.classList.toggle('active', l === current));
+    };
+    window.addEventListener('scroll', spy, { passive: true });
+    spy();
+  }
 
   // Insert a native in-content ad slot after the Nth paragraph/block
   function injectMidAd(html) {
