@@ -1019,6 +1019,9 @@ body.has-site-footer { overflow-y: auto; }
 }
 
 @media (max-width: 700px) {
+  /* Hide the redundant page tagline next to the logo on mobile */
+  .tagline { display: none; }
+
   /* Toggle buttons */
   .panel-toggle {
     display: flex;
