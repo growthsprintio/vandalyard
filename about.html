@@ -30,6 +30,33 @@
       padding: 4px 0 4px 20px; margin: 34px 0;
       font-size: 19px; line-height: 1.6; color: #fff; font-weight: 500;
     }
+    /* Roadmap */
+    .roadmap { margin-top: 52px; padding-top: 34px; border-top: 1px solid rgba(255,255,255,0.1); }
+    .roadmap-title {
+      font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+      color: rgba(255,255,255,0.45); margin-bottom: 22px;
+    }
+    .roadmap-list { list-style: none; margin: 0; padding: 0; }
+    .roadmap-item { display: flex; gap: 20px; padding: 20px 0; border-top: 1px solid rgba(255,255,255,0.07); }
+    .roadmap-item:first-child { border-top: none; }
+    .roadmap-num {
+      font-family: 'Inter', sans-serif; font-weight: 700; font-size: 14px;
+      color: var(--vy-accent, #ff2400); font-variant-numeric: tabular-nums;
+      flex-shrink: 0; padding-top: 2px; min-width: 28px;
+    }
+    .roadmap-content { flex: 1; }
+    .roadmap-head { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; flex-wrap: wrap; }
+    .roadmap-name { font-size: 17px; font-weight: 600; color: #fff; }
+    .roadmap-status {
+      font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 3px 9px; border: 1px solid currentColor;
+    }
+    .roadmap-status.live { color: #34c759; }
+    .roadmap-status.next { color: #8ab4f8; }
+    .roadmap-status.planned { color: #e8c45a; }
+    .roadmap-status.horizon { color: rgba(255,255,255,0.4); }
+    .roadmap-content p { font-size: 15px; line-height: 1.65; color: #b8b8bc; margin: 0; }
+
     .about-cta {
       margin-top: 48px; padding-top: 30px; border-top: 1px solid rgba(255,255,255,0.1);
       display: flex; flex-wrap: wrap; gap: 12px;
@@ -58,8 +85,8 @@
     </header>
 
     <main class="about-wrap">
-      <div class="about-kicker">About</div>
-      <h1 class="about-h1">The graffiti game we used to lose hours in.</h1>
+      <div class="about-kicker">About Us &amp; Our Vision</div>
+      <h1 class="about-h1">About us, and where this is headed.</h1>
 
       <div class="about-body">
         <p class="lead">We’re a small crew building the kind of graffiti game we used to lose hours in.</p>
@@ -72,6 +99,52 @@
 
         <p class="about-pull">Just a few graff enthusiasts building a game that feels like something we would’ve been obsessed with twenty years ago.</p>
       </div>
+
+      <section class="roadmap">
+        <h2 class="roadmap-title">The Roadmap</h2>
+        <ol class="roadmap-list">
+          <li class="roadmap-item">
+            <span class="roadmap-num">01</span>
+            <div class="roadmap-content">
+              <div class="roadmap-head">
+                <span class="roadmap-name">The Canvas</span>
+                <span class="roadmap-status live">Live</span>
+              </div>
+              <p>Paint virtual trains, walls, billboards and more — then post your piece to the wall for everyone to see. Getting the drawing right comes first.</p>
+            </div>
+          </li>
+          <li class="roadmap-item">
+            <span class="roadmap-num">02</span>
+            <div class="roadmap-content">
+              <div class="roadmap-head">
+                <span class="roadmap-name">Identity</span>
+                <span class="roadmap-status next">Next</span>
+              </div>
+              <p>Profiles and tags. Claim your name, build a presence, and make the wall feel like a place you belong.</p>
+            </div>
+          </li>
+          <li class="roadmap-item">
+            <span class="roadmap-num">03</span>
+            <div class="roadmap-content">
+              <div class="roadmap-head">
+                <span class="roadmap-name">Progression</span>
+                <span class="roadmap-status planned">Planned</span>
+              </div>
+              <p>Reasons to keep coming back — unlocks, recognition, and a real game loop underneath the painting.</p>
+            </div>
+          </li>
+          <li class="roadmap-item">
+            <span class="roadmap-num">04</span>
+            <div class="roadmap-content">
+              <div class="roadmap-head">
+                <span class="roadmap-name">The Bigger Picture</span>
+                <span class="roadmap-status horizon">On the horizon</span>
+              </div>
+              <p>More interaction, more world, more depth. We’re keeping the details close for now — but this is only the first layer.</p>
+            </div>
+          </li>
+        </ol>
+      </section>
 
       <div class="about-cta">
         <a class="about-btn primary" href="/go-paint.html">Go Paint</a>
