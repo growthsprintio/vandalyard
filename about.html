@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title>About — Vandal Yard</title>
+  <meta name="description" content="Vandal Yard is a free digital graffiti game built by a small crew of graff enthusiasts — paint a virtual yard, post to the wall, and watch it grow.">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    body.about-page { overflow-y: auto; }
+    .about-page #app { height: auto; min-height: 100vh; }
+
+    .about-wrap { width: 100%; max-width: 760px; margin: 0 auto; padding: 60px 24px 40px; }
+    .about-kicker {
+      font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--vy-accent, #ff2400); margin-bottom: 18px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .about-kicker::before { content: ""; width: 10px; height: 10px; background: var(--vy-accent, #ff2400); display: inline-block; }
+    .about-h1 {
+      font-family: 'Inter', sans-serif; font-weight: 700;
+      font-size: clamp(30px, 6vw, 52px); line-height: 1.05; letter-spacing: -0.5px;
+      color: #fff; margin-bottom: 36px; max-width: 16ch;
+    }
+    .about-body p { font-size: 17px; line-height: 1.75; color: #c8c8cc; margin-bottom: 22px; }
+    .about-body .lead { font-size: 20px; color: #e8e8ec; }
+    .about-pull {
+      border-left: 3px solid var(--vy-accent, #ff2400);
+      padding: 4px 0 4px 20px; margin: 34px 0;
+      font-size: 19px; line-height: 1.6; color: #fff; font-weight: 500;
+    }
+    .about-cta {
+      margin-top: 48px; padding-top: 30px; border-top: 1px solid rgba(255,255,255,0.1);
+      display: flex; flex-wrap: wrap; gap: 12px;
+    }
+    .about-btn {
+      text-decoration: none; font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 13px 26px; border: 1px solid rgba(255,255,255,0.18); color: #fff; transition: all 0.15s;
+    }
+    .about-btn:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.35); }
+    .about-btn.primary { background: var(--vy-accent, #ff2400); border-color: var(--vy-accent, #ff2400); }
+    .about-btn.primary:hover { background: #ff3a1a; }
+    @media (max-width: 600px) { .about-wrap { padding-top: 36px; } .about-body p { font-size: 16px; } }
+  </style>
+</head>
+<body class="about-page">
+  <div id="app">
+
+    <header id="topbar">
+      <div class="topbar-left">
+        <a href="/" style="text-decoration:none"><h1>VANDAL YARD</h1></a>
+      </div>
+      <nav class="topbar-right">
+        <a href="/" class="nav-link">THE WALL</a>
+        <a href="/go-paint.html" class="nav-link nav-go-paint">GO PAINT</a>
+      </nav>
+    </header>
+
+    <main class="about-wrap">
+      <div class="about-kicker">About</div>
+      <h1 class="about-h1">The graffiti game we used to lose hours in.</h1>
+
+      <div class="about-body">
+        <p class="lead">We’re a small crew building the kind of graffiti game we used to lose hours in.</p>
+
+        <p>If you came up on early 2000s browser games, you already know what we mean. Simple on the surface, weirdly addicting underneath, and built in a way that made you want to keep coming back. That’s the lane we’re in.</p>
+
+        <p>What’s live right now is the starting point. The canvas matters, the drawing matters, and getting that part right matters. But the long-term plan is to grow this into something with actual depth — profiles, more interaction, more progression, more reasons for people to plant a flag and stay active.</p>
+
+        <p>We’re keeping the deeper details close for now, but this is not the finished product. It’s the first layer.</p>
+
+        <p class="about-pull">Just a few graff enthusiasts building a game that feels like something we would’ve been obsessed with twenty years ago.</p>
+      </div>
+
+      <div class="about-cta">
+        <a class="about-btn primary" href="/go-paint.html">Go Paint</a>
+        <a class="about-btn" href="/">See The Wall</a>
+        <a class="about-btn" href="/blog">Read The Blog</a>
+      </div>
+    </main>
+
+  </div>
+
+  <script src="/supabase.js"></script>
+  <script src="/blog-common.js"></script>
+  <script>
+    applySEO({
+      title: 'About — Vandal Yard',
+      metaTitle: 'About Vandal Yard — A Free Digital Graffiti Game',
+      metaDescription: 'Vandal Yard is a free digital graffiti game built by a small crew of graff enthusiasts — paint a virtual yard, post to the wall, and watch it grow.',
+      canonical: SITE.origin + '/about.html',
+    });
+    injectJsonLd({
+      '@context': 'https://schema.org',
+      '@type': 'AboutPage',
+      name: 'About Vandal Yard',
+      url: SITE.origin + '/about.html',
+      description: 'Vandal Yard is a free digital graffiti game built by a small crew of graff enthusiasts.',
+      isPartOf: { '@type': 'WebSite', name: SITE.name, url: SITE.origin }
+    });
+  </script>
+  <script src="/site-seo.js"></script>
+  <script src="/footer.js"></script>
+</body>
+</html>
