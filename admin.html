@@ -226,19 +226,6 @@
 
   <script src="supabase.js"></script>
   <script>
-    function simpleHash(str) {
-      let hash = 0;
-      for (let i = 0; i < str.length; i++) {
-        const c = str.charCodeAt(i);
-        hash = ((hash << 5) - hash) + c;
-        hash |= 0;
-      }
-      return hash.toString();
-    }
-
-    const ADMIN_HASH = simpleHash('vandalyard2025');
-    const SESSION_KEY = 'vandalyard_admin_session';
-
     const loginGate = document.getElementById('loginGate');
     const adminPanel = document.getElementById('adminPanel');
     const adminPass = document.getElementById('adminPass');
@@ -250,10 +237,6 @@
     const adminEmpty = document.getElementById('adminEmpty');
     const adminStats = document.getElementById('adminStats');
 
-    function isLoggedIn() {
-      return sessionStorage.getItem(SESSION_KEY) === ADMIN_HASH;
-    }
-
     function showPanel() {
       loginGate.classList.add('hidden');
       adminPanel.classList.remove('hidden');
@@ -263,16 +246,17 @@
     function showLogin() {
       loginGate.classList.remove('hidden');
       adminPanel.classList.add('hidden');
-      sessionStorage.removeItem(SESSION_KEY);
+      sessionStorage.removeItem(ADMIN_SECRET_KEY);
     }
 
-    function login() {
-      const pass = adminPass.value;
-      if (simpleHash(pass) === ADMIN_HASH) {
-        sessionStorage.setItem(SESSION_KEY, ADMIN_HASH);
+    async function login() {
+      sessionStorage.setItem(ADMIN_SECRET_KEY, adminPass.value);
+      try {
+        await adminApi('ping');
         loginError.textContent = '';
         showPanel();
-      } else {
+      } catch (e) {
+        sessionStorage.removeItem(ADMIN_SECRET_KEY);
         loginError.textContent = 'Wrong password.';
         adminPass.value = '';
         adminPass.focus();
@@ -296,26 +280,20 @@
     }
 
     function escHtml(s) {
-      const d = document.createElement('div');
-      d.textContent = s;
-      return d.innerHTML;
+      return (s == null ? '' : String(s))
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
     async function deletePiece(id) {
       if (!confirm('Delete this piece?')) return;
-      const filename = id + '.jpg';
-      await db.deleteImage(filename);
-      await db.deletePiece(id);
+      await adminApi('piece.delete', { id, filename: id + '.jpg' });
       renderAdmin();
     }
 
     async function clearAll() {
       if (!confirm('Delete ALL pieces from the wall? This cannot be undone.')) return;
-      const pieces = await db.getPieces(0, 200);
-      for (const p of pieces) {
-        await db.deleteImage(p.id + '.jpg');
-      }
-      await db.deleteAllPieces();
+      await adminApi('piece.deleteAll');
       renderAdmin();
     }
 
@@ -348,11 +326,12 @@
       `).join('');
     }
 
-    if (isLoggedIn()) {
-      showPanel();
-    } else {
+    (async () => {
+      if (sessionStorage.getItem(ADMIN_SECRET_KEY)) {
+        try { await adminApi('ping'); showPanel(); return; } catch {}
+      }
       showLogin();
-    }
+    })();
   </script>
 </body>
 </html>

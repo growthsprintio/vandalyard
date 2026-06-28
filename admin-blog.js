@@ -1,39 +1,32 @@
 /* VANDAL YARD — Blog CMS logic */
 (function () {
-  // ── Auth (shared password with wall admin) ──
-  function simpleHash(str) {
-    let h = 0;
-    for (let i = 0; i < str.length; i++) { h = ((h << 5) - h) + str.charCodeAt(i); h |= 0; }
-    return h.toString();
-  }
-  const ADMIN_HASH = simpleHash('vandalyard2025');
-  const SESSION_KEY = 'vandalyard_admin_session';
-
+  // ── Auth: the password IS the server-side ADMIN_SECRET ──
   const $ = id => document.getElementById(id);
   const loginGate = $('loginGate'), listView = $('listView'), editView = $('editView');
 
-  function loggedIn() { return sessionStorage.getItem(SESSION_KEY) === ADMIN_HASH; }
   function showLogin() { loginGate.classList.remove('hidden'); listView.classList.add('hidden'); editView.classList.add('hidden'); }
   function showList() { loginGate.classList.add('hidden'); listView.classList.remove('hidden'); editView.classList.add('hidden'); renderList(); }
   function showEditor() { loginGate.classList.add('hidden'); listView.classList.add('hidden'); editView.classList.remove('hidden'); }
 
   $('loginBtn').addEventListener('click', login);
   $('pass').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
-  function login() {
-    if (simpleHash($('pass').value) === ADMIN_HASH) {
-      sessionStorage.setItem(SESSION_KEY, ADMIN_HASH);
+  async function login() {
+    sessionStorage.setItem(ADMIN_SECRET_KEY, $('pass').value);
+    try {
+      await adminApi('ping');           // verified server-side
       $('loginErr').textContent = '';
       showList();
-    } else {
+    } catch (e) {
+      sessionStorage.removeItem(ADMIN_SECRET_KEY);
       $('loginErr').textContent = 'Wrong password.';
       $('pass').value = '';
     }
   }
-  $('logoutBtn').addEventListener('click', () => { sessionStorage.removeItem(SESSION_KEY); showLogin(); });
+  $('logoutBtn').addEventListener('click', () => { sessionStorage.removeItem(ADMIN_SECRET_KEY); showLogin(); });
 
   // ── Post list ──
   async function renderList() {
-    const posts = await db.getAllPosts();
+    const posts = await adminApi('blog.list');
     const list = $('postList'), empty = $('listEmpty');
     if (!posts.length) { list.innerHTML = ''; empty.classList.remove('hidden'); return; }
     empty.classList.add('hidden');
@@ -77,12 +70,12 @@
     $('editorTitle').textContent = id ? 'EDIT POST' : 'NEW POST';
 
     // populate category datalist
-    const all = await db.getAllPosts();
+    const all = await adminApi('blog.list');
     const cats = [...new Set(all.map(p => p.category))];
     $('catList').innerHTML = cats.map(c => `<option value="${escHtml(c)}">`).join('');
 
     if (id) {
-      const p = await db.getPostById(id);
+      const p = await adminApi('blog.get', { id });
       setVal('title', p.title); setVal('body', p.body); setVal('excerpt', p.excerpt);
       setVal('status', p.status); setVal('author', p.author || 'Anonymous');
       setVal('category', p.category); setVal('slug', p.slug);
@@ -185,7 +178,9 @@
   $('f_image_file').addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    if (!/^image\//.test(file.type)) { alert('Please choose an image file.'); e.target.value = ''; return; }
+    if (file.size > 5 * 1024 * 1024) { alert('Image too large (max 5 MB).'); e.target.value = ''; return; }
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
     const name = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2,6)}.${ext}`;
     $('f_featured_image').value = 'uploading…';
     const url = await db.uploadBlogImage(name, file, file.type);
@@ -221,11 +216,13 @@
   async function save(forceStatus) {
     const data = collect(forceStatus);
     if (forceStatus) $('f_status').value = forceStatus;
-    let result;
-    if (editingId) result = await db.updatePost(editingId, data);
-    else result = await db.createPost(data);
-    if (!result) { alert('Save failed. Check Supabase setup.'); return; }
-    showList();
+    try {
+      if (editingId) await adminApi('blog.update', { id: editingId, patch: data });
+      else await adminApi('blog.create', { post: data });
+      showList();
+    } catch (e) {
+      alert('Save failed: ' + e.message);
+    }
   }
 
   $('saveDraftBtn').addEventListener('click', () => save('draft'));
@@ -238,10 +235,15 @@
   $('deleteBtn').addEventListener('click', async () => {
     if (!editingId) return;
     if (!confirm('Delete this post permanently?')) return;
-    await db.deletePost(editingId);
+    await adminApi('blog.delete', { id: editingId });
     showList();
   });
 
-  // ── Init ──
-  if (loggedIn()) showList(); else showLogin();
+  // ── Init ── (verify any stored secret with the server)
+  (async () => {
+    if (sessionStorage.getItem(ADMIN_SECRET_KEY)) {
+      try { await adminApi('ping'); showList(); return; } catch {}
+    }
+    showLogin();
+  })();
 })();

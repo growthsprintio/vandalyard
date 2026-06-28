@@ -12,6 +12,27 @@ const supabaseHeaders = {
   'Prefer': 'return=representation',
 };
 
+// ── Gated admin API client (used by admin pages only) ──
+// The admin password IS the ADMIN_SECRET; it is sent to /api/admin which
+// verifies it server-side and performs privileged writes with the service role.
+const ADMIN_SECRET_KEY = 'vandalyard_admin_secret';
+
+async function adminApi(action, payload) {
+  const secret = sessionStorage.getItem(ADMIN_SECRET_KEY) || '';
+  const res = await fetch('/api/admin', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
+    body: JSON.stringify(Object.assign({ action }, payload || {})),
+  });
+  if (res.status === 401) throw new Error('unauthorized');
+  if (!res.ok) {
+    let msg = 'request failed';
+    try { msg = (await res.json()).error || msg; } catch {}
+    throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
+  }
+  return res.json();
+}
+
 const db = {
   async getPieces(page, perPage) {
     const from = page * perPage;

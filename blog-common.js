@@ -17,9 +17,12 @@ const ADSENSE_CLIENT = ''; // e.g. 'ca-pub-1234567890123456'
 // ── Text / date utilities ──
 
 function escHtml(s) {
-  const d = document.createElement('div');
-  d.textContent = s == null ? '' : String(s);
-  return d.innerHTML;
+  return (s == null ? '' : String(s))
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function fmtDate(ts) {
