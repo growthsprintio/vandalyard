@@ -10,7 +10,7 @@
   footer.innerHTML = `
     <div class="site-footer-inner">
       <nav class="site-footer-links" aria-label="Footer">
-        <a href="/index.html">The Wall</a>
+        <a href="/">The Wall</a>
         <a href="/go-paint.html">Go Paint</a>
         <a href="/blog/">Blog</a>
         <a href="/about.html">About</a>
