@@ -1893,13 +1893,13 @@ const colorSlotsEl = document.getElementById('colorSlots');
 // Build the 3 color slots (primary / secondary / tertiary)
 function buildSlots() {
   if (!colorSlotsEl) return;
-  const labels = ['P', 'S', 'T'];
+  const labels = ['A', 'B', 'C'];
   colorSlotsEl.innerHTML = '';
   state.slots.forEach((color, i) => {
     const btn = document.createElement('button');
     btn.className = 'color-slot' + (i === state.activeSlot ? ' active' : '');
     btn.dataset.slot = i;
-    btn.title = ['Primary', 'Secondary', 'Tertiary'][i] + ' color';
+    btn.title = 'Color ' + labels[i];
     btn.innerHTML = `<span class="slot-sw" style="background:${color}"></span><span class="slot-label">${labels[i]}</span>`;
     btn.addEventListener('click', () => setActiveSlot(i));
     colorSlotsEl.appendChild(btn);
