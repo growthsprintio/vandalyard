@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title>404 — Vandal Yard</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    body.nf-page { overflow-y: auto; }
+    .nf-page #app { height: auto; min-height: 100vh; }
+    .nf-wrap { flex: 1 0 auto; display: flex; flex-direction: column; justify-content: center; max-width: 760px; margin: 0 auto; padding: 80px 24px; width: 100%; }
+    .nf-code { font-family: 'Inter', sans-serif; font-weight: 700; font-size: clamp(64px, 18vw, 160px); line-height: 0.9; letter-spacing: -2px; color: #fff; }
+    .nf-code span { color: var(--vy-accent, #ff2400); }
+    .nf-msg { font-size: 18px; color: #b8b8bc; margin: 18px 0 30px; max-width: 40ch; }
+    .nf-cta { display: flex; flex-wrap: wrap; gap: 12px; }
+    .nf-btn { text-decoration: none; font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; padding: 13px 26px; border: 1px solid rgba(255,255,255,0.18); color: #fff; transition: all 0.15s; }
+    .nf-btn:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.35); }
+    .nf-btn.primary { background: var(--vy-accent, #ff2400); border-color: var(--vy-accent, #ff2400); }
+    .nf-btn.primary:hover { background: #ff3a1a; }
+  </style>
+</head>
+<body class="nf-page">
+  <div id="app">
+    <header id="topbar">
+      <div class="topbar-left">
+        <a href="/" style="text-decoration:none"><h1>VANDAL YARD</h1></a>
+      </div>
+      <nav class="topbar-right">
+        <a href="/" class="nav-link">THE WALL</a>
+        <a href="/go-paint.html" class="nav-link nav-go-paint">GO PAINT</a>
+      </nav>
+    </header>
+
+    <main class="nf-wrap">
+      <div class="nf-code">4<span>0</span>4</div>
+      <p class="nf-msg">This spot got buffed. The page you’re looking for isn’t here.</p>
+      <div class="nf-cta">
+        <a class="nf-btn primary" href="/go-paint.html">Go Paint</a>
+        <a class="nf-btn" href="/">See The Wall</a>
+        <a class="nf-btn" href="/blog">Read The Blog</a>
+      </div>
+    </main>
+  </div>
+  <script src="/footer.js"></script>
+</body>
+</html>

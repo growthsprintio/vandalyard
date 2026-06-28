@@ -2308,9 +2308,16 @@ function closePostModal() {
   postModal.classList.add('hidden');
 }
 
+const POST_COOLDOWN_MS = 30000; // basic anti-flood: 30s between posts per browser
+
 async function submitPost() {
-  const title = postTitle.value.trim() || 'Untitled';
-  const artist = postArtist.value.trim() || 'Anonymous';
+  // Lightweight client-side rate limit (deters casual flooding/double-posts)
+  const last = parseInt(localStorage.getItem('vandalyard_last_post') || '0', 10);
+  const wait = Math.ceil((last + POST_COOLDOWN_MS - Date.now()) / 1000);
+  if (wait > 0) { alert(`Hold up — you can post again in ${wait}s.`); return; }
+
+  const title = postTitle.value.trim().slice(0, 40) || 'Untitled';
+  const artist = postArtist.value.trim().slice(0, 20) || 'Anonymous';
   localStorage.setItem('vandalyard_artist', artist);
 
   postSubmit.disabled = true;
@@ -2333,6 +2340,7 @@ async function submitPost() {
       image_url: imageUrl,
     });
 
+    localStorage.setItem('vandalyard_last_post', Date.now().toString());
     closePostModal();
     state.strokes = [];
     repaintStrokes();
