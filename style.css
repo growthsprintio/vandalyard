@@ -1019,9 +1019,6 @@ body.has-site-footer { overflow-y: auto; }
 }
 
 @media (max-width: 700px) {
-  /* Hide the redundant page tagline next to the logo on mobile */
-  .tagline { display: none; }
-
   /* Toggle buttons */
   .panel-toggle {
     display: flex;
@@ -1194,7 +1191,7 @@ body { background: var(--vy-bg); color: var(--vy-ink); }
   text-transform: uppercase;
 }
 #topbar h1::before { content: ""; width: 12px; height: 12px; background: var(--vy-accent); display: inline-block; }
-.tagline { color: var(--vy-mute); text-transform: uppercase; letter-spacing: 2px; font-size: 10px; }
+.tagline { display: none; }
 
 .topbar-right { gap: 0; align-items: stretch; }
 .nav-link {
