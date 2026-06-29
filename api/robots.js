@@ -26,10 +26,8 @@ module.exports = async (req, res) => {
     lines.push('Disallow: /');
   }
 
-  // Always keep admin/tooling out of the index
-  lines.push('Disallow: /admin.html');
-  lines.push('Disallow: /admin-blog.html');
-  lines.push('Disallow: /admin-seo.html');
+  // Admin pages are kept out of search via per-page <meta name="robots" noindex>
+  // (intentionally NOT listed here, so robots.txt doesn't enumerate them).
 
   // Custom extra rules from the SEO admin
   if (s.robots_extra) {
