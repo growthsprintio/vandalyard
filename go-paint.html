@@ -167,19 +167,34 @@
     const toolbar = document.getElementById('toolbar');
     const utilbar = document.getElementById('utilbar');
 
+    // Re-fit the canvas to the (changed) canvas area after a panel animates
+    function refitCanvas() {
+      if (typeof resizeCanvases === 'function') resizeCanvases();
+    }
+
     toolbarToggle.addEventListener('click', () => {
       toolbar.classList.toggle('collapsed');
       toolbarToggle.classList.toggle('flipped');
+      setTimeout(refitCanvas, 280); // after the max-height transition
     });
     utilbarToggle.addEventListener('click', () => {
       utilbar.classList.toggle('collapsed');
       utilbarToggle.classList.toggle('flipped');
+      setTimeout(refitCanvas, 280);
     });
 
     // Start with the tools panel collapsed on mobile (canvas first).
     // The action bar (with POST TO WALL) stays visible — not collapsed.
     if (window.innerWidth <= 700) {
       toolbar.classList.add('collapsed');
+    }
+
+    // Auto-fit the canvas whenever its container changes size (panel toggle,
+    // orientation change, etc.). Debounced so it only fires once settled.
+    if (window.ResizeObserver) {
+      let t;
+      const ro = new ResizeObserver(() => { clearTimeout(t); t = setTimeout(refitCanvas, 90); });
+      ro.observe(document.getElementById('canvasWrap'));
     }
   </script>
 </body>
