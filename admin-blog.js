@@ -121,7 +121,7 @@
     const cat = getVal('category') || 'category';
     const slug = getVal('slug') || 'slug';
     $('catEcho').textContent = cat;
-    $('serpUrl').textContent = `vandalyard.vercel.app › blog › ${cat}`;
+    $('serpUrl').textContent = `vandalyard.com › blog › ${cat}`;
     const mt = getVal('meta_title') || getVal('title') || 'Post title';
     const md = getVal('meta_description') || getVal('excerpt') || 'Meta description preview…';
     $('serpTitle').textContent = mt;

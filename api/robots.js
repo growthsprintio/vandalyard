@@ -15,7 +15,7 @@ async function getSettings() {
 }
 
 module.exports = async (req, res) => {
-  const origin = `https://${req.headers.host}`;
+  const origin = 'https://vandalyard.com'; // canonical domain
   const s = await getSettings();
   const indexSite = s.index_site !== 'false'; // default: allow indexing
 

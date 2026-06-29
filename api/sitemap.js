@@ -18,7 +18,7 @@ function xmlEscape(s) {
 }
 
 module.exports = async (req, res) => {
-  const origin = `https://${req.headers.host}`;
+  const origin = 'https://vandalyard.com'; // canonical domain
   const now = new Date().toISOString();
 
   let posts = [];

@@ -4,7 +4,9 @@
 
 const SITE = {
   name: 'Vandal Yard',
-  origin: location.origin,              // e.g. https://vandalyard.vercel.app
+  // Canonical origin — always the primary custom domain, regardless of which
+  // domain served the page, so canonical/OG/JSON-LD never point at *.vercel.app.
+  origin: 'https://vandalyard.com',
   defaultOgImage: '/og-default.png',
   twitter: '@vandalyard',
 };
