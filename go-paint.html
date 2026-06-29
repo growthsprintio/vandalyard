@@ -176,10 +176,10 @@
       utilbarToggle.classList.toggle('flipped');
     });
 
-    // Start collapsed on mobile
+    // Start with the tools panel collapsed on mobile (canvas first).
+    // The action bar (with POST TO WALL) stays visible — not collapsed.
     if (window.innerWidth <= 700) {
       toolbar.classList.add('collapsed');
-      utilbar.classList.add('collapsed');
     }
   </script>
 </body>

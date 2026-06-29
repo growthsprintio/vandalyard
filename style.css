@@ -1330,3 +1330,72 @@ body { background: var(--vy-bg); color: var(--vy-ink); }
   border-top: 8px solid var(--vy-accent);
   border-right: 8px solid transparent;
 }
+
+/* ══════════════════════════════════════════════════════════════
+   MOBILE STUDIO — declared LAST so it overrides the Swiss desktop
+   rules on small screens. Fixes cramped tools + buried POST button.
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 700px) {
+  /* Tools panel: full width, comfortable spacing, 2-up grid for compact groups */
+  #toolbar {
+    width: 100% !important;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    padding: 0;
+    max-height: 64vh;
+    overflow-y: auto;
+  }
+  #toolbar.collapsed { max-height: 0; overflow: hidden; opacity: 0; }
+  .tool-group {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--vy-line-soft);
+    gap: 10px;
+  }
+  /* SURFACE + COLOR get the full width; TOOL|CAP and OPACITY|EXTRAS pair up */
+  #toolbar .tool-group:nth-child(1),
+  #toolbar .tool-group:nth-child(2) { grid-column: 1 / -1; }
+  #toolbar .tool-group:nth-child(3),
+  #toolbar .tool-group:nth-child(5) { border-right: 1px solid var(--vy-line-soft); }
+
+  #palette { grid-template-columns: repeat(8, 1fr); gap: 4px; }
+  .color-custom-row { display: flex; }
+  #brushButtons, #capButtons { flex-direction: column; gap: 5px; }
+  .cap-btn, .brush-btn { padding: 9px 12px; font-size: 11px; }
+
+  /* Bottom action bar: ALWAYS visible, POST is the prominent CTA */
+  #utilbarToggle { display: none; }
+  #utilbar {
+    height: auto;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+    max-height: none !important;
+    opacity: 1 !important;
+    overflow: visible;
+  }
+  #utilbar.collapsed { max-height: none !important; opacity: 1 !important; padding: 10px 12px; }
+  .util-left, .util-right { display: contents; }
+  #utilbar button {
+    height: auto;
+    border: 1px solid var(--vy-line);
+    border-radius: 0;
+    padding: 12px 8px;
+    flex: 1 1 0;
+    font-size: 11px;
+  }
+  #utilbar button:hover { box-shadow: none; }
+  /* POST TO WALL: full-width, top, unmistakable */
+  #utilbar .btn-post {
+    flex: 1 1 100%;
+    order: -1;
+    background: #34a853;
+    color: #fff;
+    border-color: #34a853;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 15px;
+    letter-spacing: 2px;
+  }
+  #utilbar .btn-post:hover { background: #34a853; }
+}
