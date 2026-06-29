@@ -1389,13 +1389,13 @@ body { background: var(--vy-bg); color: var(--vy-ink); }
   #utilbar .btn-post {
     flex: 1 1 100%;
     order: -1;
-    background: #34a853;
+    background: var(--vy-accent);
     color: #fff;
-    border-color: #34a853;
+    border-color: var(--vy-accent);
     font-size: 14px;
     font-weight: 700;
     padding: 15px;
     letter-spacing: 2px;
   }
-  #utilbar .btn-post:hover { background: #34a853; }
+  #utilbar .btn-post:hover { background: #ff3a1a; }
 }
