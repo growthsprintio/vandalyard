@@ -174,6 +174,10 @@ function postCardHtml(post) {
 // Renders a reserved ad container (fixed min-height → no layout shift).
 // If ADSENSE_CLIENT is set, loads the AdSense script once and fills slots.
 function adSlot(slotId, label) {
+  // Until manual ad units are configured (ADSENSE_CLIENT set), render nothing
+  // so the live site shows no empty "Advertisement" boxes. Auto ads (the
+  // adsbygoogle script in each page <head>) place ads automatically.
+  if (!ADSENSE_CLIENT) return '';
   return `
     <div class="ad-slot" data-ad-slot="${slotId || ''}" aria-hidden="true">
       <span class="ad-slot-label">${label || 'Advertisement'}</span>
