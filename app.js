@@ -30,6 +30,9 @@ const SURFACES = {
   overpass:  { label: 'Highway Overpass', generate: generateOverpassSurface,  mask: generateOverpassMask },
   watertower:{ label: 'Water Tower',      generate: generateWaterTowerSurface, mask: generateWaterTowerMask },
   subway:    { label: 'Subway Interior',  generate: generateSubwaySurface,    mask: generateSubwayMask },
+  blackbook: { label: 'Blackbook',        generate: generateBlackbookSurface, mask: generateBlackbookMask },
+  alleyway:  { label: 'Alleyway',         generate: generateAlleywaySurface,  mask: generateAlleywayMask },
+  heaven:    { label: 'Heaven Spot',      generate: generateHeavenSurface,    mask: generateHeavenMask },
 };
 
 // ── App state ──
@@ -1780,6 +1783,326 @@ function generateSubwayMask(ctx, w, h) {
   // Ad strip + window row are paintable
   ctx.fillRect(x0, L.adY, ww, L.adH);
   ctx.fillRect(x0, L.winY, ww, L.winH);
+}
+
+// ── BLACKBOOK SURFACE (graffiti sketchbook page) ──
+
+function blackbookLayout(w, h) {
+  return { pX: w * 0.13, pY: h * 0.07, pW: w * 0.78, pH: h * 0.86 };
+}
+
+function generateBlackbookSurface(ctx, w, h) {
+  const L = blackbookLayout(w, h);
+
+  // Dark desk background
+  const desk = ctx.createLinearGradient(0, 0, 0, h);
+  desk.addColorStop(0, '#1b1814');
+  desk.addColorStop(1, '#131110');
+  ctx.fillStyle = desk;
+  ctx.fillRect(0, 0, w, h);
+  // faint desk wood grain
+  ctx.globalAlpha = 0.04;
+  ctx.strokeStyle = '#000';
+  for (let y = 0; y < h; y += 7) {
+    ctx.beginPath(); ctx.moveTo(0, y + (noise(y, 0, 3) - 0.5) * 4); ctx.lineTo(w, y + (noise(y, 9, 3) - 0.5) * 4); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // Drop shadow under the book
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(L.pX + 8, L.pY + 10, L.pW, L.pH);
+
+  // Back cover lip (peeking behind page)
+  ctx.fillStyle = '#0c0b0a';
+  ctx.fillRect(L.pX - 6, L.pY - 6, L.pW + 12, L.pH + 12);
+
+  // Paper page
+  const paper = ctx.createLinearGradient(L.pX, L.pY, L.pX, L.pY + L.pH);
+  paper.addColorStop(0, '#efe9da');
+  paper.addColorStop(0.5, '#e7e0cf');
+  paper.addColorStop(1, '#ded6c2');
+  ctx.fillStyle = paper;
+  ctx.fillRect(L.pX, L.pY, L.pW, L.pH);
+
+  // Subtle inner shading toward the spine (left)
+  const spineShade = ctx.createLinearGradient(L.pX, 0, L.pX + L.pW * 0.18, 0);
+  spineShade.addColorStop(0, 'rgba(0,0,0,0.10)');
+  spineShade.addColorStop(1, 'transparent');
+  ctx.fillStyle = spineShade;
+  ctx.fillRect(L.pX, L.pY, L.pW * 0.18, L.pH);
+
+  // Margin line (red) near the left, like a sketchbook
+  ctx.strokeStyle = 'rgba(200,70,70,0.35)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(L.pX + L.pW * 0.13, L.pY + 6);
+  ctx.lineTo(L.pX + L.pW * 0.13, L.pY + L.pH - 6);
+  ctx.stroke();
+
+  // Paper grain + a few specks/smudges
+  applyNoise(ctx, Math.floor(L.pX), Math.floor(L.pY), Math.floor(L.pW), Math.floor(L.pH), 8);
+  ctx.fillStyle = 'rgba(90,80,60,0.08)';
+  for (let i = 0; i < 40; i++) {
+    ctx.fillRect(L.pX + Math.random() * L.pW, L.pY + Math.random() * L.pH, 1 + Math.random() * 2, 1);
+  }
+  // Faint old pencil ghost-lines (very light) for character
+  ctx.strokeStyle = 'rgba(80,80,90,0.05)';
+  for (let i = 0; i < 5; i++) {
+    const gy = L.pY + L.pH * (0.2 + i * 0.15);
+    ctx.beginPath(); ctx.moveTo(L.pX + L.pW * 0.2, gy); ctx.lineTo(L.pX + L.pW * 0.85, gy + (noise(i, 2, 5) - 0.5) * 20); ctx.stroke();
+  }
+
+  // Spiral binding down the left edge
+  const ringX = L.pX;
+  const ringStep = L.pH / 22;
+  for (let i = 0; i < 22; i++) {
+    const ry = L.pY + ringStep * (i + 0.5);
+    // hole
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.beginPath(); ctx.ellipse(ringX, ry, 4, 3, 0, 0, Math.PI * 2); ctx.fill();
+    // metal coil
+    ctx.strokeStyle = '#b9bcc2';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(ringX, ry, 7, Math.PI * 0.15, Math.PI * 1.15);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(ringX, ry - 1, 7, Math.PI * 0.2, Math.PI * 0.7);
+    ctx.stroke();
+  }
+
+  // Page edge highlight
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(L.pX + 0.5, L.pY + 0.5, L.pW - 1, L.pH - 1);
+}
+
+function generateBlackbookMask(ctx, w, h) {
+  ctx.clearRect(0, 0, w, h);
+  const L = blackbookLayout(w, h);
+  ctx.fillStyle = '#00FF00';
+  // paintable page area, inset past the spiral binding on the left
+  ctx.fillRect(L.pX + L.pW * 0.06, L.pY + 6, L.pW * 0.92, L.pH - 12);
+}
+
+// ── ALLEYWAY SURFACE (grimy alley wall) ──
+
+function alleywayLayout(w, h) {
+  return { wallY: h * 0.05, groundY: h * 0.80 };
+}
+
+function generateAlleywaySurface(ctx, w, h) {
+  const L = alleywayLayout(w, h);
+
+  // Night sky sliver at very top
+  ctx.fillStyle = '#0d0f16';
+  ctx.fillRect(0, 0, w, L.wallY);
+
+  // ── Cinderblock wall ──
+  const wall = ctx.createLinearGradient(0, L.wallY, 0, L.groundY);
+  wall.addColorStop(0, '#5a5852');
+  wall.addColorStop(0.5, '#4e4c47');
+  wall.addColorStop(1, '#3e3c38');
+  ctx.fillStyle = wall;
+  ctx.fillRect(0, L.wallY, w, L.groundY - L.wallY);
+
+  // Cinderblocks: wide blocks with mortar joints
+  const bW = 78, bH = 34, mW = 3;
+  for (let row = 0; row * (bH + mW) + L.wallY < L.groundY; row++) {
+    const off = (row % 2) * (bW / 2);
+    const y = L.wallY + row * (bH + mW);
+    for (let col = -1; col * (bW + mW) < w + bW; col++) {
+      const x = col * (bW + mW) + off;
+      const v = (noise(col, row, 17) - 0.5) * 18;
+      const base = 76 + v;
+      const bg = ctx.createLinearGradient(x, y, x, y + bH);
+      bg.addColorStop(0, `rgb(${base + 8},${base + 6},${base})`);
+      bg.addColorStop(1, `rgb(${base - 10},${base - 11},${base - 14})`);
+      ctx.fillStyle = bg;
+      ctx.fillRect(x, y, bW, bH);
+      // joint shadows
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      ctx.fillRect(x, y + bH, bW, mW);
+      ctx.fillRect(x + bW, y, mW, bH + mW);
+      // top highlight
+      ctx.fillStyle = 'rgba(255,255,255,0.03)';
+      ctx.fillRect(x, y, bW, 1);
+    }
+  }
+
+  // Grime + texture
+  applyNoise(ctx, 0, Math.floor(L.wallY), w, Math.floor(L.groundY - L.wallY), 14);
+  weatherStreaks(ctx, 0, L.wallY, w, L.groundY - L.wallY, 45, 'rgba(20,18,14,1)');
+  // dark stains
+  for (let i = 0; i < 18; i++) {
+    const sx = Math.random() * w, sy = L.wallY + Math.random() * (L.groundY - L.wallY);
+    const sr = 20 + Math.random() * 60;
+    const st = ctx.createRadialGradient(sx, sy, 0, sx, sy, sr);
+    st.addColorStop(0, 'rgba(0,0,0,0.12)'); st.addColorStop(1, 'transparent');
+    ctx.fillStyle = st; ctx.fillRect(sx - sr, sy - sr, sr * 2, sr * 2);
+  }
+  // grime rising from the ground
+  const grime = ctx.createLinearGradient(0, L.groundY - 90, 0, L.groundY);
+  grime.addColorStop(0, 'transparent'); grime.addColorStop(1, 'rgba(0,0,0,0.4)');
+  ctx.fillStyle = grime; ctx.fillRect(0, L.groundY - 90, w, 90);
+
+  // ── Vertical downpipe on the right ──
+  const pipeX = w * 0.9;
+  ctx.fillStyle = '#2a2824';
+  ctx.fillRect(pipeX, L.wallY, 14, L.groundY - L.wallY);
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  ctx.fillRect(pipeX + 2, L.wallY, 3, L.groundY - L.wallY);
+  // pipe brackets
+  ctx.fillStyle = '#1c1a17';
+  for (let py = L.wallY + 40; py < L.groundY; py += 110) ctx.fillRect(pipeX - 3, py, 20, 6);
+
+  // ── Wet asphalt ground ──
+  const ground = ctx.createLinearGradient(0, L.groundY, 0, h);
+  ground.addColorStop(0, '#232323');
+  ground.addColorStop(0.5, '#1a1a1c');
+  ground.addColorStop(1, '#101012');
+  ctx.fillStyle = ground;
+  ctx.fillRect(0, L.groundY, w, h - L.groundY);
+  // puddle reflections
+  ctx.fillStyle = 'rgba(120,130,150,0.05)';
+  for (let i = 0; i < 5; i++) {
+    const rx = Math.random() * w;
+    ctx.beginPath(); ctx.ellipse(rx, L.groundY + (h - L.groundY) * (0.4 + Math.random() * 0.5), 30 + Math.random() * 40, 5 + Math.random() * 4, 0, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // ── Dumpster, bottom-left ──
+  const dW = w * 0.34, dH = (h - L.groundY) * 0.9 + 30, dX = w * 0.04, dY = L.groundY - 30;
+  ctx.fillStyle = 'rgba(0,0,0,0.45)';
+  ctx.fillRect(dX + 6, dY + 6, dW, dH);
+  const dump = ctx.createLinearGradient(dX, dY, dX, dY + dH);
+  dump.addColorStop(0, '#2f5a3a'); dump.addColorStop(1, '#1f3f28');
+  ctx.fillStyle = dump;
+  ctx.fillRect(dX, dY, dW, dH);
+  // lid
+  ctx.fillStyle = '#26492f';
+  ctx.fillRect(dX - 4, dY - 8, dW + 8, 12);
+  // ridges + rust
+  ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 1;
+  for (let rx = dX + 14; rx < dX + dW; rx += 16) { ctx.beginPath(); ctx.moveTo(rx, dY + 6); ctx.lineTo(rx, dY + dH); ctx.stroke(); }
+  ctx.fillStyle = 'rgba(120,60,30,0.25)';
+  for (let i = 0; i < 20; i++) ctx.fillRect(dX + Math.random() * dW, dY + Math.random() * dH, 3, 2 + Math.random() * 6);
+
+  // Ground shadow line
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.fillRect(0, L.groundY, w, 3);
+}
+
+function generateAlleywayMask(ctx, w, h) {
+  ctx.clearRect(0, 0, w, h);
+  const L = alleywayLayout(w, h);
+  ctx.fillStyle = '#00FF00';
+  // whole wall is paintable; keep clear of the downpipe on the right
+  ctx.fillRect(0, L.wallY, w * 0.88, L.groundY - L.wallY);
+}
+
+// ── HEAVEN SPOT SURFACE (rooftop bulkhead, high up) ──
+
+function heavenLayout(w, h) {
+  return {
+    wallX: w * 0.10, wallW: w * 0.80,
+    wallY: h * 0.16, wallH: h * 0.42,   // bulkhead wall (paint zone)
+    roofY: h * 0.74,                     // rooftop deck line
+  };
+}
+
+function generateHeavenSurface(ctx, w, h) {
+  const L = heavenLayout(w, h);
+
+  // ── Big dusk sky (you're up high) ──
+  const sky = ctx.createLinearGradient(0, 0, 0, L.roofY);
+  sky.addColorStop(0, '#22314a');
+  sky.addColorStop(0.4, '#3a4a63');
+  sky.addColorStop(0.7, '#6b6680');
+  sky.addColorStop(1, '#b98a6e');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, w, L.roofY);
+
+  // Sun glow low
+  const glow = ctx.createRadialGradient(w * 0.75, L.roofY * 0.9, 0, w * 0.75, L.roofY * 0.9, w * 0.5);
+  glow.addColorStop(0, 'rgba(255,200,140,0.3)'); glow.addColorStop(1, 'transparent');
+  ctx.fillStyle = glow; ctx.fillRect(0, 0, w, L.roofY);
+
+  // Distant skyline far below (sells the height) — a low band of small buildings
+  const skyl = L.roofY - 6;
+  for (let i = 0; i < 40; i++) {
+    const bx = (i * 53) % w;
+    const bw = 12 + (noise(i, 1, 11) * 30);
+    const bh = 10 + noise(i, 4, 7) * 46;
+    ctx.fillStyle = `rgba(30,34,48,${0.5 + noise(i, 2, 3) * 0.4})`;
+    ctx.fillRect(bx, skyl - bh, bw, bh);
+    // a few lit windows
+    if (noise(i, 5, 9) > 0.6) {
+      ctx.fillStyle = 'rgba(255,220,140,0.5)';
+      ctx.fillRect(bx + bw * 0.4, skyl - bh + 4, 2, 2);
+    }
+  }
+  // haze over the skyline
+  const haze = ctx.createLinearGradient(0, skyl - 50, 0, skyl);
+  haze.addColorStop(0, 'transparent'); haze.addColorStop(1, 'rgba(200,170,150,0.25)');
+  ctx.fillStyle = haze; ctx.fillRect(0, skyl - 50, w, 50);
+
+  // ── Rooftop deck (tar & gravel) ──
+  const roof = ctx.createLinearGradient(0, L.roofY, 0, h);
+  roof.addColorStop(0, '#3a3833'); roof.addColorStop(1, '#222019');
+  ctx.fillStyle = roof; ctx.fillRect(0, L.roofY, w, h - L.roofY);
+  ctx.fillStyle = '#46443d';
+  for (let i = 0; i < 500; i++) ctx.fillRect(Math.random() * w, L.roofY + 4 + Math.random() * (h - L.roofY - 4), 1 + Math.random() * 2, 1);
+  // parapet edge highlight where roof meets sky
+  ctx.fillStyle = 'rgba(255,210,160,0.15)';
+  ctx.fillRect(0, L.roofY, w, 2);
+
+  // ── Bulkhead / stairwell wall (paint surface) ──
+  // shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.fillRect(L.wallX + 8, L.wallY + 10, L.wallW, L.wallH);
+  // body — weathered concrete/stucco
+  const wall = ctx.createLinearGradient(0, L.wallY, 0, L.wallY + L.wallH);
+  wall.addColorStop(0, '#b8b2a6');
+  wall.addColorStop(0.5, '#a9a298');
+  wall.addColorStop(1, '#948d83');
+  ctx.fillStyle = wall;
+  ctx.fillRect(L.wallX, L.wallY, L.wallW, L.wallH);
+
+  // coping cap on top of the wall
+  ctx.fillStyle = '#6f6a61';
+  ctx.fillRect(L.wallX - 6, L.wallY - 8, L.wallW + 12, 10);
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  ctx.fillRect(L.wallX - 6, L.wallY - 8, L.wallW + 12, 1);
+
+  // concrete texture + weathering + water streaks
+  applyNoise(ctx, Math.floor(L.wallX), Math.floor(L.wallY), Math.floor(L.wallW), Math.floor(L.wallH), 12);
+  weatherStreaks(ctx, L.wallX, L.wallY, L.wallW, L.wallH, 28, 'rgba(60,55,45,1)');
+  // efflorescence stains
+  for (let i = 0; i < 10; i++) {
+    const sx = L.wallX + Math.random() * L.wallW, sy = L.wallY + Math.random() * L.wallH;
+    const sr = 14 + Math.random() * 40;
+    const st = ctx.createRadialGradient(sx, sy, 0, sx, sy, sr);
+    st.addColorStop(0, 'rgba(0,0,0,0.05)'); st.addColorStop(1, 'transparent');
+    ctx.fillStyle = st; ctx.fillRect(sx - sr, sy - sr, sr * 2, sr * 2);
+  }
+  // grime at base of wall
+  const baseG = ctx.createLinearGradient(0, L.wallY + L.wallH - 40, 0, L.wallY + L.wallH);
+  baseG.addColorStop(0, 'transparent'); baseG.addColorStop(1, 'rgba(40,36,28,0.3)');
+  ctx.fillStyle = baseG; ctx.fillRect(L.wallX, L.wallY + L.wallH - 40, L.wallW, 40);
+
+  // little rooftop vent pipe beside the wall
+  ctx.fillStyle = '#2c2a25';
+  ctx.fillRect(L.wallX + L.wallW + w * 0.02, L.roofY - 46, 10, 46);
+  ctx.beginPath(); ctx.arc(L.wallX + L.wallW + w * 0.02 + 5, L.roofY - 46, 7, Math.PI, 0); ctx.fill();
+}
+
+function generateHeavenMask(ctx, w, h) {
+  ctx.clearRect(0, 0, w, h);
+  const L = heavenLayout(w, h);
+  ctx.fillStyle = '#00FF00';
+  ctx.fillRect(L.wallX, L.wallY, L.wallW, L.wallH);
 }
 
 // ══════════════════════════════════
