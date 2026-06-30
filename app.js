@@ -2111,8 +2111,17 @@ function generateHeavenMask(ctx, w, h) {
 
 function resizeCanvases() {
   const rect = canvasWrap.getBoundingClientRect();
-  const w = Math.floor(rect.width);
+  let w = Math.floor(rect.width);
   const h = Math.floor(rect.height);
+
+  // Portrait phones: render a wide, landscape-proportioned surface and let the
+  // user pan horizontally (two fingers), instead of squishing wide spots into
+  // a tall window. Desktop/landscape keep the canvas fit to the container.
+  const portrait = rect.width <= 700 && h > rect.width;
+  if (portrait && h > 0) {
+    const ASPECT = 1.5; // canvas width : height
+    w = Math.max(Math.round(h * ASPECT), Math.floor(rect.width));
+  }
 
   for (const c of [bgCanvas, paintCanvas, gridCanvas, maskCanvasEl]) {
     c.width = w;
@@ -2123,6 +2132,9 @@ function resizeCanvases() {
   buildMask();
   repaintStrokes();
   drawGrid();
+
+  // Center the wide canvas in the viewport so the piece starts centered
+  if (portrait) canvasWrap.scrollLeft = Math.max(0, (w - rect.width) / 2);
 }
 
 // Cache of loaded surface images; redraws when an image finishes loading
@@ -2446,8 +2458,23 @@ function getPos(e) {
   return { x: cx - rect.left, y: cy - rect.top };
 }
 
+// Two-finger pan (mobile): scroll the wide canvas horizontally
+const panState = { active: false, startX: 0, startScroll: 0 };
+
 function onPointerDown(e) {
   if (e.button && e.button !== 0) return;
+
+  // Two fingers → pan instead of paint
+  if (e.touches && e.touches.length >= 2) {
+    e.preventDefault();
+    state.painting = false;
+    state.current = null;
+    panState.active = true;
+    panState.startX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+    panState.startScroll = canvasWrap.scrollLeft;
+    return;
+  }
+
   e.preventDefault();
 
   const pos = getPos(e);
@@ -2469,6 +2496,14 @@ function onPointerDown(e) {
 }
 
 function onPointerMove(e) {
+  // Two-finger pan
+  if (panState.active && e.touches && e.touches.length >= 2) {
+    e.preventDefault();
+    const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+    canvasWrap.scrollLeft = panState.startScroll - (midX - panState.startX);
+    return;
+  }
+
   const pos = getPos(e);
   updateCursor(pos);
 
@@ -2497,6 +2532,7 @@ function onPointerMove(e) {
 }
 
 function onPointerUp() {
+  if (panState.active) { panState.active = false; return; }
   if (!state.painting) return;
   state.painting = false;
   if (state.current && state.current.points.length > 0) {

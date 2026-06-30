@@ -186,11 +186,17 @@
       setTimeout(refitCanvas, 280);
     });
 
-    // Start with the tools panel collapsed on mobile (canvas first).
-    // The action bar (with POST TO WALL) stays visible — not collapsed.
-    if (window.innerWidth <= 700) {
-      toolbar.classList.add('collapsed');
+    // Collapse the tools when sideways (landscape phone) for max canvas room.
+    function collapseForLandscape() {
+      const landscapePhone = window.matchMedia('(orientation: landscape)').matches && window.innerWidth <= 900;
+      const portraitPhone = window.innerWidth <= 700;
+      if (landscapePhone || portraitPhone) {
+        toolbar.classList.add('collapsed');
+        toolbarToggle.classList.remove('flipped');
+      }
     }
+    collapseForLandscape();
+    window.addEventListener('orientationchange', () => setTimeout(collapseForLandscape, 200));
 
     // Auto-fit the canvas whenever its container changes size (panel toggle,
     // orientation change, etc.). Debounced so it only fires once settled.
