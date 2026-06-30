@@ -1096,12 +1096,35 @@ body.has-site-footer { overflow-y: auto; }
      two-finger gestures, so disable native touch gestures on the canvas. */
   #canvasWrap {
     overflow-x: auto;
-    overflow-y: hidden;
+    overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
   #canvasWrap::-webkit-scrollbar { display: none; }
   #paintCanvas, #gridCanvas, #maskCanvas, #bgCanvas { touch-action: none; }
+
+  /* Scroll-edge fades + chevrons (pinned to the viewport edges via JS translateX) */
+  .canvas-fade {
+    position: absolute; top: 0; left: 0; width: 44px;
+    pointer-events: none; z-index: 6; opacity: 0; transition: opacity 0.2s ease;
+  }
+  .canvas-fade-left  { background: linear-gradient(90deg, rgba(5,5,5,0.85), rgba(5,5,5,0)); }
+  .canvas-fade-right { background: linear-gradient(270deg, rgba(5,5,5,0.85), rgba(5,5,5,0)); }
+  .canvas-fade::after {
+    content: ''; position: absolute; top: 50%; width: 9px; height: 9px;
+    border-top: 2px solid rgba(255,255,255,0.7); border-right: 2px solid rgba(255,255,255,0.7);
+  }
+  .canvas-fade-left::after  { left: 14px; transform: translateY(-50%) rotate(-135deg); }
+  .canvas-fade-right::after { right: 14px; transform: translateY(-50%) rotate(45deg); }
+
+  /* One-time gesture hint */
+  .pan-hint {
+    position: fixed; left: 50%; bottom: 120px; transform: translateX(-50%) translateY(8px);
+    background: rgba(0,0,0,0.82); color: #fff; padding: 9px 16px; border-radius: 22px;
+    font-size: 12px; letter-spacing: 0.4px; z-index: 60; pointer-events: none;
+    opacity: 0; transition: opacity 0.4s ease, transform 0.4s ease; white-space: nowrap;
+  }
+  .pan-hint.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   /* Toolbar — collapsible horizontal strip */
   #toolbar {
@@ -1357,7 +1380,7 @@ body { background: var(--vy-bg); color: var(--vy-ink); }
     max-height: 64vh;
     overflow-y: auto;
   }
-  #toolbar.collapsed { max-height: 0; overflow: hidden; opacity: 0; }
+  #toolbar.collapsed { max-height: 0 !important; overflow: hidden !important; opacity: 0 !important; padding: 0 !important; }
   .tool-group {
     padding: 14px 16px;
     border-bottom: 1px solid var(--vy-line-soft);

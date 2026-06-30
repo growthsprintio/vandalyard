@@ -2126,7 +2126,10 @@ function resizeCanvases() {
   for (const c of [bgCanvas, paintCanvas, gridCanvas, maskCanvasEl]) {
     c.width = w;
     c.height = h;
+    c.style.width = '';   // reset any zoom CSS sizing
+    c.style.height = '';
   }
+  if (typeof zoom !== 'undefined') zoom = 1;
 
   drawBackground();
   buildMask();
@@ -2135,6 +2138,7 @@ function resizeCanvases() {
 
   // Center the wide canvas in the viewport so the piece starts centered
   if (portrait) canvasWrap.scrollLeft = Math.max(0, (w - rect.width) / 2);
+  if (typeof window.updateCanvasFades === 'function') window.updateCanvasFades();
 }
 
 // Cache of loaded surface images; redraws when an image finishes loading
@@ -2455,23 +2459,48 @@ function getPos(e) {
   const rect = paintCanvas.getBoundingClientRect();
   const cx = e.touches ? e.touches[0].clientX : e.clientX;
   const cy = e.touches ? e.touches[0].clientY : e.clientY;
-  return { x: cx - rect.left, y: cy - rect.top };
+  // Map CSS/screen coords to backing-store pixels (handles zoom + DPR scaling)
+  const sx = paintCanvas.width / rect.width;
+  const sy = paintCanvas.height / rect.height;
+  return { x: (cx - rect.left) * sx, y: (cy - rect.top) * sy };
 }
 
-// Two-finger pan (mobile): scroll the wide canvas horizontally
-const panState = { active: false, startX: 0, startScroll: 0 };
+// Two-finger gesture (mobile): pinch to zoom + drag to pan the canvas
+let zoom = 1;
+const ZOOM_MIN = 1, ZOOM_MAX = 4;
+const gesture = { active: false, startDist: 0, startZoom: 1, contentX: 0, contentY: 0 };
+
+function touchDist(t) {
+  return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+}
+
+function applyZoom(z) {
+  zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
+  if (zoom === 1) {
+    for (const c of [bgCanvas, paintCanvas, gridCanvas, maskCanvasEl]) { c.style.width = ''; c.style.height = ''; }
+  } else {
+    const cw = bgCanvas.width * zoom, ch = bgCanvas.height * zoom;
+    for (const c of [bgCanvas, paintCanvas, gridCanvas, maskCanvasEl]) { c.style.width = cw + 'px'; c.style.height = ch + 'px'; }
+  }
+}
 
 function onPointerDown(e) {
   if (e.button && e.button !== 0) return;
 
-  // Two fingers → pan instead of paint
+  // Two fingers → pinch-zoom + pan (not paint)
   if (e.touches && e.touches.length >= 2) {
     e.preventDefault();
     state.painting = false;
     state.current = null;
-    panState.active = true;
-    panState.startX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-    panState.startScroll = canvasWrap.scrollLeft;
+    const r = canvasWrap.getBoundingClientRect();
+    const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+    const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+    gesture.active = true;
+    gesture.startDist = touchDist(e.touches) || 1;
+    gesture.startZoom = zoom;
+    // content point (backing px) currently under the pinch midpoint
+    gesture.contentX = (canvasWrap.scrollLeft + midX - r.left) / zoom;
+    gesture.contentY = (canvasWrap.scrollTop + midY - r.top) / zoom;
     return;
   }
 
@@ -2496,11 +2525,18 @@ function onPointerDown(e) {
 }
 
 function onPointerMove(e) {
-  // Two-finger pan
-  if (panState.active && e.touches && e.touches.length >= 2) {
+  // Two-finger pinch-zoom + pan
+  if (gesture.active && e.touches && e.touches.length >= 2) {
     e.preventDefault();
+    const r = canvasWrap.getBoundingClientRect();
+    const nz = gesture.startZoom * (touchDist(e.touches) / gesture.startDist);
+    applyZoom(nz);
     const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-    canvasWrap.scrollLeft = panState.startScroll - (midX - panState.startX);
+    const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+    // keep the focal content point under the fingers (pinch + pan together)
+    canvasWrap.scrollLeft = gesture.contentX * zoom - (midX - r.left);
+    canvasWrap.scrollTop = gesture.contentY * zoom - (midY - r.top);
+    if (typeof window.updateCanvasFades === 'function') window.updateCanvasFades();
     return;
   }
 
@@ -2532,7 +2568,7 @@ function onPointerMove(e) {
 }
 
 function onPointerUp() {
-  if (panState.active) { panState.active = false; return; }
+  if (gesture.active) { gesture.active = false; return; }
   if (!state.painting) return;
   state.painting = false;
   if (state.current && state.current.points.length > 0) {

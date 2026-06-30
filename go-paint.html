@@ -119,6 +119,8 @@
         <canvas id="paintCanvas"></canvas>
         <canvas id="gridCanvas"></canvas>
         <div id="cursorRing"></div>
+        <div id="fadeLeft" class="canvas-fade canvas-fade-left" aria-hidden="true"></div>
+        <div id="fadeRight" class="canvas-fade canvas-fade-right" aria-hidden="true"></div>
       </main>
 
     </div>
@@ -198,12 +200,42 @@
     collapseForLandscape();
     window.addEventListener('orientationchange', () => setTimeout(collapseForLandscape, 200));
 
+    // ── Scroll fades: hint that there's more canvas to either side ──
+    const wrapEl = document.getElementById('canvasWrap');
+    const fadeLeft = document.getElementById('fadeLeft');
+    const fadeRight = document.getElementById('fadeRight');
+    window.updateCanvasFades = function () {
+      const sl = wrapEl.scrollLeft, vw = wrapEl.clientWidth, sw = wrapEl.scrollWidth;
+      const hh = wrapEl.scrollHeight + 'px';
+      fadeLeft.style.height = hh; fadeRight.style.height = hh;
+      fadeLeft.style.transform = 'translateX(' + sl + 'px)';
+      fadeRight.style.transform = 'translateX(' + (sl + vw - 44) + 'px)';
+      fadeLeft.style.opacity = sl > 6 ? '1' : '0';
+      fadeRight.style.opacity = (sl + vw < sw - 6) ? '1' : '0';
+    };
+    wrapEl.addEventListener('scroll', window.updateCanvasFades, { passive: true });
+
     // Auto-fit the canvas whenever its container changes size (panel toggle,
     // orientation change, etc.). Debounced so it only fires once settled.
     if (window.ResizeObserver) {
       let t;
-      const ro = new ResizeObserver(() => { clearTimeout(t); t = setTimeout(refitCanvas, 90); });
-      ro.observe(document.getElementById('canvasWrap'));
+      const ro = new ResizeObserver(() => {
+        clearTimeout(t);
+        t = setTimeout(() => { refitCanvas(); window.updateCanvasFades(); }, 90);
+      });
+      ro.observe(wrapEl);
+    }
+
+    // ── One-time gesture hint (mobile) ──
+    if (window.innerWidth <= 700 && !localStorage.getItem('vy_pan_hint_seen')) {
+      const hint = document.createElement('div');
+      hint.className = 'pan-hint';
+      hint.textContent = '✌ Two fingers to pan · pinch to zoom';
+      document.body.appendChild(hint);
+      requestAnimationFrame(() => hint.classList.add('show'));
+      const dismiss = () => { hint.classList.remove('show'); setTimeout(() => hint.remove(), 400); localStorage.setItem('vy_pan_hint_seen', '1'); window.removeEventListener('touchstart', dismiss); };
+      setTimeout(dismiss, 4000);
+      window.addEventListener('touchstart', dismiss, { once: false });
     }
   </script>
 </body>
