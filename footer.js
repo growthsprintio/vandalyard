@@ -14,6 +14,8 @@
         <a href="/go-paint.html">Go Paint</a>
         <a href="/blog/">Blog</a>
         <a href="/about.html">About</a>
+        <a href="/contact.html">Contact</a>
+        <a href="/privacy.html">Privacy</a>
         <a href="/terms.html">Terms</a>
       </nav>
       <div class="site-footer-meta">

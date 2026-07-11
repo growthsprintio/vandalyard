@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title>Contact | Vandal Yard</title>
+  <meta name="description" content="Get in touch with Vandal Yard — questions, feedback, or report content on The Wall.">
+  <link rel="canonical" href="https://vandalyard.com/contact.html">
+  <meta name="google-adsense-account" content="ca-pub-5794731202035606">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    body.doc-page { overflow-y: auto; }
+    .doc-page #app { height: auto; min-height: 100vh; }
+    .doc-wrap { max-width: 620px; margin: 0 auto; padding: 44px 24px 60px; color: #bbb; font-size: 14px; line-height: 1.7; width: 100%; }
+    .doc-wrap h1 { font-family: 'Space Grotesk', sans-serif; font-size: 26px; letter-spacing: 2px; color: #eee; margin-bottom: 10px; }
+    .doc-wrap p { margin-bottom: 16px; }
+    .doc-wrap a { color: #8ab4f8; text-decoration: none; }
+    .cform label { display:block; font-size:10px; font-weight:700; letter-spacing:1.5px; color:#888; text-transform:uppercase; margin:14px 0 5px; }
+    .cform input[type=text], .cform input[type=email], .cform textarea {
+      width:100%; background:#1e1e22; border:1px solid #333; border-radius:8px; color:#e8eaed; padding:11px 12px; font-family:inherit; font-size:14px;
+    }
+    .cform input:focus, .cform textarea:focus { outline:none; border-color:#8ab4f8; }
+    .cform textarea { resize:vertical; min-height:130px; }
+    .cform .hp { position:absolute; left:-9999px; }
+    .cform button {
+      margin-top:18px; background:#ff2400; color:#fff; border:none; border-radius:8px;
+      padding:13px 28px; font-family:inherit; font-size:13px; font-weight:700; letter-spacing:1px; cursor:pointer;
+    }
+    .cform button:hover { background:#ff3a1a; }
+    .cform button:disabled { opacity:.6; cursor:default; }
+    .cform-status { margin-top:14px; font-size:13px; min-height:18px; }
+    .ok { color:#7ee2a0; } .bad { color:#f28b82; }
+  </style>
+</head>
+<body class="doc-page">
+  <div id="app">
+    <header id="topbar">
+      <div class="topbar-left">
+        <a href="/" style="text-decoration:none"><h1>VANDAL YARD</h1></a>
+      </div>
+      <nav class="topbar-right">
+        <a href="/" class="nav-link">THE WALL</a>
+        <a href="/go-paint.html" class="nav-link nav-go-paint">GO PAINT</a>
+      </nav>
+    </header>
+
+    <main class="doc-wrap">
+      <h1>CONTACT</h1>
+      <p>Questions, feedback, partnership ideas, or need to report a piece on The Wall? Send us a message below — we read everything. You don't need an account, and you can leave the name/email blank if you'd rather stay anonymous (though an email helps if you want a reply).</p>
+
+      <form id="contactForm" class="cform" autocomplete="off">
+        <label for="c_name">Name (optional)</label>
+        <input type="text" id="c_name" maxlength="60" placeholder="Your name or tag">
+
+        <label for="c_email">Email (optional — for a reply)</label>
+        <input type="email" id="c_email" maxlength="120" placeholder="you@example.com">
+
+        <label for="c_message">Message</label>
+        <textarea id="c_message" maxlength="4000" placeholder="What's on your mind?"></textarea>
+
+        <!-- honeypot: bots fill this, humans never see it -->
+        <input type="text" id="c_website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+        <button id="c_submit" type="submit">SEND MESSAGE</button>
+        <div id="c_status" class="cform-status"></div>
+      </form>
+    </main>
+  </div>
+
+  <script src="/supabase.js"></script>
+  <script src="/site-seo.js"></script>
+  <script src="/footer.js"></script>
+  <script>
+    (function () {
+      const $ = id => document.getElementById(id);
+      const form = $('contactForm'), status = $('c_status'), btn = $('c_submit');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if ($('c_website').value) return;                 // honeypot tripped → silently drop
+        const message = $('c_message').value.trim();
+        if (message.length < 5) { status.textContent = 'Please write a message first.'; status.className = 'cform-status bad'; return; }
+
+        // basic rate limit
+        const last = parseInt(localStorage.getItem('vy_contact_last') || '0', 10);
+        if (Date.now() - last < 30000) { status.textContent = 'Hold on a moment before sending again.'; status.className = 'cform-status bad'; return; }
+
+        btn.disabled = true; btn.textContent = 'SENDING…';
+        try {
+          const res = await fetch(SUPABASE_URL + '/rest/v1/contact_messages', {
+            method: 'POST',
+            headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+            body: JSON.stringify({ name: $('c_name').value.trim() || null, email: $('c_email').value.trim() || null, message }),
+          });
+          if (!res.ok) throw new Error('send failed');
+          localStorage.setItem('vy_contact_last', Date.now().toString());
+          form.reset();
+          status.textContent = 'Thanks — your message was sent. We\'ll get back to you if you left an email.';
+          status.className = 'cform-status ok';
+        } catch (err) {
+          status.textContent = 'Something went wrong sending your message. Please try again shortly.';
+          status.className = 'cform-status bad';
+        } finally {
+          btn.disabled = false; btn.textContent = 'SEND MESSAGE';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
