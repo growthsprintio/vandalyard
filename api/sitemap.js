@@ -9,6 +9,8 @@ const STATIC_PAGES = [
   { loc: '/go-paint.html', priority: '0.9', changefreq: 'weekly' },
   { loc: '/about.html', priority: '0.7', changefreq: 'monthly' },
   { loc: '/blog', priority: '0.8', changefreq: 'daily' },
+  { loc: '/contact.html', priority: '0.5', changefreq: 'yearly' },
+  { loc: '/privacy.html', priority: '0.3', changefreq: 'yearly' },
   { loc: '/terms.html', priority: '0.3', changefreq: 'yearly' },
 ];
 
