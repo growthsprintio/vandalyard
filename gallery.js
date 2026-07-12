@@ -125,4 +125,21 @@ if (typeof adSlot === 'function') {
   if (adEl) { adEl.innerHTML = adSlot('wall-bottom', 'Advertisement'); if (typeof initAds === 'function') initAds(); }
 }
 
+// Hero: flick a few real community pieces onto the "table"
+async function renderHero() {
+  const el = document.getElementById('heroPieces');
+  if (!el) return;
+  const pieces = await db.getPieces(0, 3);
+  if (!pieces.length) { el.style.display = 'none'; return; }
+  el.innerHTML = pieces.slice(0, 3).map(p =>
+    `<figure class="hero-flick" data-id="${p.id}"><img src="${escHtml(p.image_url)}" alt="Graffiti piece: ${escHtml(p.title)}" loading="eager"></figure>`
+  ).join('');
+  el.removeAttribute('aria-hidden');
+  el.addEventListener('click', e => {
+    const f = e.target.closest('.hero-flick');
+    if (f) { galleryCache = []; openLightboxById(f.dataset.id); }
+  });
+}
+renderHero();
+
 renderGallery();

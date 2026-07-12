@@ -53,23 +53,22 @@
     </header>
 
     <div class="gallery-wrap">
-      <section class="home-intro">
-        <h1 class="home-intro-title">Free online graffiti — paint the yard.</h1>
-        <p class="home-intro-lead">Vandal Yard is a free digital graffiti game you play right in your browser. Grab a virtual spray can, pick your caps and colors, and bomb a train car, brick wall, billboard, water tower, subway, alleyway, or rooftop heaven spot — then drop your piece on the community wall for everyone to see. No account, no cleanup, no consequences.</p>
-        <div class="home-intro-cta">
-          <a class="home-btn primary" href="/go-paint.html">Start Painting</a>
-          <a class="home-btn" href="/blog">Learn to Draw Graffiti</a>
+      <section class="hero">
+        <div class="hero-text">
+          <span class="hero-kicker">Free &middot; no account &middot; paint anything</span>
+          <h1 class="hero-title">Free online graffiti.<br><span class="hero-accent">Bomb the yard.</span></h1>
+          <p class="hero-sub">Spray virtual trains, walls, rooftops and billboards with real caps, colors and drips — then throw your piece up on the wall for the whole yard to see. No cans, no cops, no cleanup.</p>
+          <div class="hero-cta">
+            <a class="btn-loud" href="/go-paint.html">Grab a can</a>
+            <a class="btn-quiet" href="#wall">see what's up &darr;</a>
+          </div>
         </div>
-        <div class="home-how">
-          <div class="home-how-step"><span class="home-how-n">01</span><strong>Pick a surface</strong><span>Ten spots — trains, walls, billboards, rooftops and more.</span></div>
-          <div class="home-how-step"><span class="home-how-n">02</span><strong>Spray your piece</strong><span>Realistic caps, colors, drips and blends. Pinch to zoom on mobile.</span></div>
-          <div class="home-how-step"><span class="home-how-n">03</span><strong>Post to the wall</strong><span>Share it below and see what the community is putting up.</span></div>
-        </div>
+        <div class="hero-art" id="heroPieces" aria-hidden="true"></div>
       </section>
 
-      <div class="gallery-header">
-        <h2>THE WALL — Latest pieces</h2>
-        <p>Fresh graffiti from the community. New drops land up top; older pieces roll off after page 5. New here? <a class="text-link" href="/go-paint.html">Paint your first piece</a> or <a class="text-link" href="/blog">read the graffiti guides</a>.</p>
+      <div id="wall" class="gallery-header wall-header">
+        <h2>On the wall</h2>
+        <p>Fresh from the community — newest up top, and pieces roll off after page 5, so catch 'em before they're buffed. New here? <a class="text-link" href="/go-paint.html">paint your first piece</a> or <a class="text-link" href="/blog">read the graffiti guides</a>.</p>
       </div>
 
       <div id="galleryGrid" class="wall-grid"></div>
