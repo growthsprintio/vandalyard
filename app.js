@@ -2484,6 +2484,53 @@ function applyZoom(z) {
   }
 }
 
+// ── Continuous spray emitter (VandalSquad / Playdo feel) ──
+// The can keeps spraying while held — even when stationary — so paint builds
+// up from translucent to solid, and overloading a spot makes it drip.
+let sprayRAF = null;
+const spray = { x: 0, y: 0, lastX: 0, lastY: 0, hold: 0 };
+
+function startSprayLoop() {
+  if (sprayRAF) return;
+  const tick = () => {
+    if (!state.painting || !state.current || state.brush !== 'spray') { sprayRAF = null; return; }
+    const cur = state.current;
+    const dx = spray.x - spray.lastX, dy = spray.y - spray.lastY;
+    const dist = Math.hypot(dx, dy);
+
+    if (dist > 0.8) {
+      // moving → lay spray along the path (smooth line, less build-up)
+      const spacing = Math.max(1.2, cur.radius * 0.22);
+      const steps = Math.max(1, Math.floor(dist / spacing));
+      for (let i = 1; i <= steps; i++) {
+        const px = spray.lastX + (dx * i) / steps, py = spray.lastY + (dy * i) / steps;
+        cur.points.push({ x: px, y: py, v: dist / steps });
+        drawDab(paintCtx, px, py, cur.radius, cur.color, cur.opacity, 'spray', dist / steps);
+      }
+      spray.hold = Math.max(0, spray.hold - steps);
+    } else {
+      // stationary → keep spraying the same spot so paint builds up
+      cur.points.push({ x: spray.x, y: spray.y, v: 0 });
+      drawDab(paintCtx, spray.x, spray.y, cur.radius, cur.color, cur.opacity, 'spray', 0);
+      spray.hold += 1;
+    }
+
+    // Overload → a drip runs down (sooner with fat/flare caps + high flow)
+    const thresh = state.cap === 'fat' ? 9 : state.cap === 'flare' ? 7 : 16;
+    if (spray.hold > thresh && cur.opacity > 0.35 && Math.random() < 0.5) {
+      const d = { x: spray.x + (Math.random() - 0.5) * cur.radius * 0.5, y: spray.y + cur.radius * 0.35 };
+      cur.drips.push(d);
+      addDrip(paintCtx, d.x, d.y, cur.color, cur.opacity);
+      spray.hold = thresh * 0.4;
+    }
+
+    spray.lastX = spray.x; spray.lastY = spray.y;
+    sprayRAF = requestAnimationFrame(tick);
+  };
+  sprayRAF = requestAnimationFrame(tick);
+}
+function stopSprayLoop() { if (sprayRAF) { cancelAnimationFrame(sprayRAF); sprayRAF = null; } }
+
 function onPointerDown(e) {
   if (e.button && e.button !== 0) return;
 
@@ -2522,6 +2569,14 @@ function onPointerDown(e) {
   };
 
   drawDab(paintCtx, pos.x, pos.y, state.current.radius, state.current.color, state.current.opacity, state.current.brush, 0);
+
+  // Spray keeps flowing while held (continuous emitter); marker/chisel are stroke-based
+  if (state.brush === 'spray') {
+    spray.x = spray.lastX = pos.x;
+    spray.y = spray.lastY = pos.y;
+    spray.hold = 0;
+    startSprayLoop();
+  }
 }
 
 function onPointerMove(e) {
@@ -2546,6 +2601,14 @@ function onPointerMove(e) {
   if (!state.painting || !state.current) return;
   e.preventDefault();
 
+  // Spray: just steer the emitter — the continuous loop lays the paint
+  if (state.brush === 'spray') {
+    spray.x = pos.x;
+    spray.y = pos.y;
+    return;
+  }
+
+  // Marker / chisel: discrete dabs interpolated along the stroke
   const last = state.current.points[state.current.points.length - 1];
   const dx = pos.x - last.x, dy = pos.y - last.y;
   const dist = Math.sqrt(dx * dx + dy * dy);
@@ -2558,17 +2621,11 @@ function onPointerMove(e) {
     state.current.points.push(p);
     drawDab(paintCtx, p.x, p.y, state.current.radius, state.current.color, state.current.opacity, state.current.brush, p.v);
   });
-
-  // Drip chance when moving slowly with fat cap
-  if (state.cap === 'fat' && dist < 3 && state.brush === 'spray' && Math.random() < 0.08) {
-    const drip = { x: pos.x + (Math.random() - 0.5) * 4, y: pos.y };
-    state.current.drips.push(drip);
-    addDrip(paintCtx, drip.x, drip.y, state.current.color, state.current.opacity);
-  }
 }
 
 function onPointerUp() {
   if (gesture.active) { gesture.active = false; return; }
+  stopSprayLoop();
   if (!state.painting) return;
   state.painting = false;
   if (state.current && state.current.points.length > 0) {
