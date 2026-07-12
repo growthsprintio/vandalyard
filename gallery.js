@@ -32,6 +32,34 @@ function escHtml(s) {
     .replace(/'/g, '&#39;');
 }
 
+// ── Likes (one per browser, tracked in localStorage) ──
+function likedSet() {
+  try { return new Set(JSON.parse(localStorage.getItem('vy_liked') || '[]')); }
+  catch { return new Set(); }
+}
+function hasLiked(id) { return likedSet().has(id); }
+function markLiked(id) {
+  const s = likedSet(); s.add(id);
+  localStorage.setItem('vy_liked', JSON.stringify([...s]));
+}
+const HEART = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 21s-7.5-4.6-10-9.3C.4 8.3 2 5 5.2 5c2 0 3.3 1.1 3.8 2 .5-.9 1.8-2 3.8-2C16 5 17.6 8.3 16 11.7 15.5 12.8 12 21 12 21z"/></svg>';
+function likeBtnHtml(piece) {
+  const liked = hasLiked(piece.id);
+  return `<button class="like-btn${liked ? ' liked' : ''}" data-id="${piece.id}" aria-label="Like this piece" ${liked ? 'aria-pressed="true"' : ''}>
+    ${HEART}<span class="like-count">${piece.likes || 0}</span>
+  </button>`;
+}
+async function handleLike(id, btn) {
+  if (hasLiked(id)) return;
+  markLiked(id);
+  btn.classList.add('liked');
+  const countEl = btn.querySelector('.like-count');
+  const optimistic = (parseInt(countEl.textContent, 10) || 0) + 1;
+  countEl.textContent = optimistic;
+  const real = await db.likePiece(id);
+  if (typeof real === 'number') countEl.textContent = real;
+}
+
 async function renderGallery() {
   const total = await db.getTotalCount();
 
@@ -53,11 +81,13 @@ async function renderGallery() {
     <div class="wall-piece" data-id="${piece.id}">
       <img class="wall-piece-img" src="${escHtml(piece.image_url)}" alt="${escHtml(piece.title)}" loading="lazy">
       <div class="wall-piece-info">
-        <span class="wall-piece-title">${escHtml(piece.title)}</span>
-        <div class="wall-piece-meta">
-          <span class="wall-piece-artist">${escHtml(piece.artist)}</span><br>
-          ${timeAgo(piece.created_at)}
+        <div class="wall-piece-titles">
+          <span class="wall-piece-title">${escHtml(piece.title)}</span>
+          <div class="wall-piece-meta">
+            <span class="wall-piece-artist">${escHtml(piece.artist)}</span> &middot; ${timeAgo(piece.created_at)}
+          </div>
         </div>
+        ${likeBtnHtml(piece)}
       </div>
     </div>
   `).join('');
@@ -99,6 +129,12 @@ async function openLightboxById(id) {
   lightboxImg.alt = piece.title;
   lightboxTitle.textContent = piece.title;
   lightboxMeta.textContent = piece.artist + '  ·  ' + timeAgo(piece.created_at);
+  const likeWrap = document.getElementById('lightboxLike');
+  if (likeWrap) {
+    likeWrap.innerHTML = likeBtnHtml(piece);
+    const b = likeWrap.querySelector('.like-btn');
+    b.addEventListener('click', () => handleLike(piece.id, b));
+  }
   lightbox.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
 }
@@ -113,6 +149,8 @@ document.querySelector('.lightbox-close').addEventListener('click', closeLightbo
 window.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
 galleryGrid.addEventListener('click', e => {
+  const like = e.target.closest('.like-btn');
+  if (like) { e.stopPropagation(); handleLike(like.dataset.id, like); return; }
   const piece = e.target.closest('.wall-piece');
   if (!piece) return;
   galleryCache = []; // refresh cache

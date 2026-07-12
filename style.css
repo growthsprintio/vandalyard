@@ -722,21 +722,39 @@ body.gallery-page {
   padding: 14px 16px;
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
+  gap: 10px;
 }
+.wall-piece-titles { min-width: 0; }
 
 .wall-piece-title {
   font-size: 13px;
   color: rgba(255,255,255,0.8);
   font-weight: 600;
+  display: block;
 }
 
 .wall-piece-meta {
   font-size: 10px;
   color: rgba(255,255,255,0.25);
-  text-align: right;
   font-weight: 500;
+  margin-top: 3px;
 }
+
+/* Like button */
+.like-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.55); border-radius: 20px; padding: 5px 11px;
+  font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: all 0.12s ease; flex-shrink: 0;
+}
+.like-btn svg { fill: currentColor; transition: transform 0.15s ease; }
+.like-btn:hover { background: rgba(255,45,45,0.12); border-color: rgba(255,45,45,0.3); color: #ff6b6b; }
+.like-btn.liked { background: rgba(255,45,45,0.16); border-color: rgba(255,45,45,0.45); color: #ff4d4d; cursor: default; }
+.like-btn.liked svg { animation: likePop 0.3s ease; }
+@keyframes likePop { 0% { transform: scale(1); } 40% { transform: scale(1.4); } 100% { transform: scale(1); } }
+#lightboxLike .like-btn { background: rgba(255,255,255,0.08); }
 
 .wall-piece-artist {
   color: rgba(255,255,255,0.45);

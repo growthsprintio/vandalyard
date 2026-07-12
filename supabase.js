@@ -34,14 +34,24 @@ async function adminApi(action, payload) {
 }
 
 const db = {
-  async getPieces(page, perPage) {
+  async getPieces(page, perPage, sort = 'newest') {
     const from = page * perPage;
-    const to = from + perPage - 1;
+    const order = sort === 'top' ? 'likes.desc,created_at.desc' : 'created_at.desc';
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/pieces?select=*&order=created_at.desc&offset=${from}&limit=${perPage}`,
+      `${SUPABASE_URL}/rest/v1/pieces?select=*&order=${order}&offset=${from}&limit=${perPage}`,
       { headers: supabaseHeaders }
     );
     return res.json();
+  },
+
+  // Increment a piece's like count via a security-definer RPC (safe under RLS)
+  async likePiece(id) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/increment_likes`, {
+      method: 'POST', headers: supabaseHeaders, body: JSON.stringify({ pid: id }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return typeof data === 'number' ? data : (Array.isArray(data) ? data[0] : null);
   },
 
   async getTotalCount() {
