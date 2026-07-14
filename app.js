@@ -14,10 +14,10 @@ const COLORS = [
 // ── Cap configs ──
 
 const CAPS = {
-  thin:   { radius: 3 },
-  medium: { radius: 8 },
-  fat:    { radius: 14 },
-  flare:  { radius: 22 },
+  thin:    { radius: 3 },
+  medium:  { radius: 8 },
+  fat:     { radius: 14 },
+  supafat: { radius: 42 },
 };
 
 // ── Surface definitions ──
@@ -62,6 +62,12 @@ const gridCanvas   = document.getElementById('gridCanvas');
 const maskCanvasEl = document.getElementById('maskCanvas');
 const canvasWrap   = document.getElementById('canvasWrap');
 const cursorRing   = document.getElementById('cursorRing');
+
+// Scratch layer for the in-progress stroke. Paint builds up here at full flow,
+// then composites onto paintCanvas at the stroke's opacity — so a single stroke
+// can never exceed its opacity, no matter how much it overlaps itself.
+const strokeCanvas = document.getElementById('strokeCanvas');
+const strokeCtx    = strokeCanvas.getContext('2d');
 
 const bgCtx    = bgCanvas.getContext('2d');
 const paintCtx = paintCanvas.getContext('2d');
@@ -2123,7 +2129,7 @@ function resizeCanvases() {
     w = Math.max(Math.round(h * ASPECT), Math.floor(rect.width));
   }
 
-  for (const c of [bgCanvas, paintCanvas, gridCanvas, maskCanvasEl]) {
+  for (const c of [bgCanvas, paintCanvas, strokeCanvas, gridCanvas, maskCanvasEl]) {
     c.width = w;
     c.height = h;
     c.style.width = '';   // reset any zoom CSS sizing
@@ -2321,45 +2327,6 @@ function drawDab(ctx, x, y, radius, color, opacity, brush, velocity) {
     return;
   }
 
-  // Flare cap — wide elliptical fan spray, soft edges, heavy coverage
-  if (state.cap === 'flare') {
-    const spread = radius * 1.4;
-    const height = radius * 0.5;
-    const dabs = Math.max(8, Math.floor(radius * 3));
-    for (let i = 0; i < dabs; i++) {
-      // Elliptical distribution — wide horizontally, narrow vertically
-      const ax = (Math.random() - 0.5) * 2;
-      const ay = (Math.random() - 0.5) * 2;
-      const dx = x + ax * spread;
-      const dy = y + ay * height;
-      if (!isInPaintZone(dx, dy)) continue;
-
-      // Distance from center for fade
-      const distNorm = Math.sqrt((ax * ax) + (ay * ay));
-      const edgeFade = Math.max(0, 1.0 - distNorm * 0.7);
-      const r = 0.8 + Math.random() * 2.5;
-      ctx.globalAlpha = opacity * (0.15 + Math.random() * 0.35) * edgeFade;
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(dx, dy, r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    // Dense center core
-    const coreDabs = Math.floor(dabs * 0.4);
-    for (let i = 0; i < coreDabs; i++) {
-      const dx = x + (Math.random() - 0.5) * spread * 0.3;
-      const dy = y + (Math.random() - 0.5) * height * 0.4;
-      if (!isInPaintZone(dx, dy)) continue;
-      ctx.globalAlpha = opacity * (0.3 + Math.random() * 0.4);
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(dx, dy, 0.5 + Math.random() * 1.5, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1.0;
-    return;
-  }
-
   // Spray brush — pressure-sensitive with denser center
   const speed = velocity || 1;
   const densityMult = Math.max(0.5, Math.min(2.0, 1.5 / speed));
@@ -2404,14 +2371,32 @@ function addDrip(ctx, x, y, color, opacity) {
   ctx.globalAlpha = 1.0;
 }
 
+// Render a finished stroke: build it up on the scratch layer at full flow, then
+// flatten onto the target at the stroke's opacity (so overlap can't oversaturate).
 function drawStroke(ctx, stroke) {
+  strokeCtx.clearRect(0, 0, strokeCanvas.width, strokeCanvas.height);
   const pts = stroke.points;
   for (let i = 0; i < pts.length; i++) {
-    drawDab(ctx, pts[i].x, pts[i].y, stroke.radius, stroke.color, stroke.opacity, stroke.brush, pts[i].v || 1);
+    drawDab(strokeCtx, pts[i].x, pts[i].y, stroke.radius, stroke.color, 1, stroke.brush, pts[i].v || 1);
   }
   if (stroke.drips) {
-    stroke.drips.forEach(d => addDrip(ctx, d.x, d.y, stroke.color, stroke.opacity));
+    stroke.drips.forEach(d => addDrip(strokeCtx, d.x, d.y, stroke.color, 1));
   }
+  ctx.globalAlpha = stroke.opacity;
+  ctx.drawImage(strokeCanvas, 0, 0);
+  ctx.globalAlpha = 1;
+  strokeCtx.clearRect(0, 0, strokeCanvas.width, strokeCanvas.height);
+}
+
+// Flatten the live in-progress layer onto the permanent paint canvas at its opacity
+function commitActiveStroke() {
+  if (state.current) {
+    paintCtx.globalAlpha = state.current.opacity;
+    paintCtx.drawImage(strokeCanvas, 0, 0);
+    paintCtx.globalAlpha = 1;
+  }
+  strokeCtx.clearRect(0, 0, strokeCanvas.width, strokeCanvas.height);
+  strokeCanvas.style.opacity = '1';
 }
 
 function interpolatePoints(p0, p1, spacing) {
@@ -2477,10 +2462,10 @@ function touchDist(t) {
 function applyZoom(z) {
   zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
   if (zoom === 1) {
-    for (const c of [bgCanvas, paintCanvas, gridCanvas, maskCanvasEl]) { c.style.width = ''; c.style.height = ''; }
+    for (const c of [bgCanvas, paintCanvas, strokeCanvas, gridCanvas, maskCanvasEl]) { c.style.width = ''; c.style.height = ''; }
   } else {
     const cw = bgCanvas.width * zoom, ch = bgCanvas.height * zoom;
-    for (const c of [bgCanvas, paintCanvas, gridCanvas, maskCanvasEl]) { c.style.width = cw + 'px'; c.style.height = ch + 'px'; }
+    for (const c of [bgCanvas, paintCanvas, strokeCanvas, gridCanvas, maskCanvasEl]) { c.style.width = cw + 'px'; c.style.height = ch + 'px'; }
   }
 }
 
@@ -2505,22 +2490,22 @@ function startSprayLoop() {
       for (let i = 1; i <= steps; i++) {
         const px = spray.lastX + (dx * i) / steps, py = spray.lastY + (dy * i) / steps;
         cur.points.push({ x: px, y: py, v: dist / steps });
-        drawDab(paintCtx, px, py, cur.radius, cur.color, cur.opacity, 'spray', dist / steps);
+        drawDab(strokeCtx, px, py, cur.radius, cur.color, 1, 'spray', dist / steps);
       }
       spray.hold = Math.max(0, spray.hold - steps);
     } else {
       // stationary → keep spraying the same spot so paint builds up
       cur.points.push({ x: spray.x, y: spray.y, v: 0 });
-      drawDab(paintCtx, spray.x, spray.y, cur.radius, cur.color, cur.opacity, 'spray', 0);
+      drawDab(strokeCtx, spray.x, spray.y, cur.radius, cur.color, 1, 'spray', 0);
       spray.hold += 1;
     }
 
-    // Overload → a drip runs down (sooner with fat/flare caps + high flow)
-    const thresh = state.cap === 'fat' ? 9 : state.cap === 'flare' ? 7 : 16;
+    // Overload → a drip runs down (sooner with fat/supa-fat caps + high flow)
+    const thresh = state.cap === 'supafat' ? 7 : state.cap === 'fat' ? 9 : 16;
     if (spray.hold > thresh && cur.opacity > 0.35 && Math.random() < 0.5) {
       const d = { x: spray.x + (Math.random() - 0.5) * cur.radius * 0.5, y: spray.y + cur.radius * 0.35 };
       cur.drips.push(d);
-      addDrip(paintCtx, d.x, d.y, cur.color, cur.opacity);
+      addDrip(strokeCtx, d.x, d.y, cur.color, 1);
       spray.hold = thresh * 0.4;
     }
 
@@ -2568,7 +2553,10 @@ function onPointerDown(e) {
     drips: [],
   };
 
-  drawDab(paintCtx, pos.x, pos.y, state.current.radius, state.current.color, state.current.opacity, state.current.brush, 0);
+  // Start a fresh scratch layer; preview it at the stroke's opacity while painting
+  strokeCtx.clearRect(0, 0, strokeCanvas.width, strokeCanvas.height);
+  strokeCanvas.style.opacity = String(state.current.opacity);
+  drawDab(strokeCtx, pos.x, pos.y, state.current.radius, state.current.color, 1, state.current.brush, 0);
 
   // Spray keeps flowing while held (continuous emitter); marker/chisel are stroke-based
   if (state.brush === 'spray') {
@@ -2619,7 +2607,7 @@ function onPointerMove(e) {
 
   interp.forEach(p => {
     state.current.points.push(p);
-    drawDab(paintCtx, p.x, p.y, state.current.radius, state.current.color, state.current.opacity, state.current.brush, p.v);
+    drawDab(strokeCtx, p.x, p.y, state.current.radius, state.current.color, 1, state.current.brush, p.v);
   });
 }
 
@@ -2628,6 +2616,8 @@ function onPointerUp() {
   stopSprayLoop();
   if (!state.painting) return;
   state.painting = false;
+  // Flatten the finished stroke onto the paint canvas at its opacity
+  commitActiveStroke();
   if (state.current && state.current.points.length > 0) {
     state.strokes.push(state.current);
   }
@@ -2640,7 +2630,6 @@ function updateCursor(pos) {
   const r = getCapRadius();
   let size;
   if (state.brush === 'chisel') size = r * 2.4 + 2;
-  else if (state.cap === 'flare') { size = r * 2.8 + 2; }
   else size = r * 2 + 2;
 
   cursorRing.style.display = 'block';
@@ -2650,11 +2639,7 @@ function updateCursor(pos) {
   cursorRing.style.top = (pos.y - size / 2) + 'px';
 
   cursorRing.style.borderColor = 'rgba(255,255,255,0.4)';
-  if (state.cap === 'flare') {
-    cursorRing.style.borderRadius = '50% / 35%';
-  } else {
-    cursorRing.style.borderRadius = '50%';
-  }
+  cursorRing.style.borderRadius = '50%';
 }
 
 // ══════════════════════════════════
@@ -2886,7 +2871,7 @@ function init() {
       case '3': document.querySelector('[data-cap="fat"]').click(); break;
       case 'z': if (!e.ctrlKey && !e.metaKey) undo(); break;
       case 'c': if (!e.ctrlKey && !e.metaKey) clearCanvas(); break;
-      case '4': document.querySelector('[data-cap="flare"]').click(); break;
+      case '4': document.querySelector('[data-cap="supafat"]').click(); break;
       case 's': if (!e.ctrlKey) { e.preventDefault(); document.querySelector('[data-brush="spray"]').click(); } break;
       case 'm': document.querySelector('[data-brush="marker"]').click(); break;
     }

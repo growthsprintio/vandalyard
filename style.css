@@ -295,8 +295,8 @@ body {
 
 .cap-thin { width: 5px; height: 5px; }
 .cap-medium { width: 9px; height: 9px; }
-.cap-fat { width: 14px; height: 14px; }
-.cap-flare { width: 18px; height: 10px; border-radius: 50%; }
+.cap-fat { width: 13px; height: 13px; }
+.cap-supafat { width: 20px; height: 20px; }
 
 /* Opacity slider */
 #opacitySlider {
@@ -371,6 +371,7 @@ body {
 #maskCanvas { z-index: 2; pointer-events: none; opacity: 0; transition: opacity 0.3s ease; }
 #maskCanvas.visible { opacity: 0.3; }
 #paintCanvas { z-index: 3; }
+#strokeCanvas { z-index: 3; pointer-events: none; }
 #gridCanvas { z-index: 4; pointer-events: none; }
 
 #cursorRing {
