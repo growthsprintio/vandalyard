@@ -2452,7 +2452,7 @@ function getPos(e) {
 
 // Two-finger gesture (mobile): pinch to zoom + drag to pan the canvas
 let zoom = 1;
-const ZOOM_MIN = 1, ZOOM_MAX = 4;
+const ZOOM_MIN = 1, ZOOM_MAX = 8;
 const gesture = { active: false, startDist: 0, startZoom: 1, contentX: 0, contentY: 0 };
 
 function touchDist(t) {
