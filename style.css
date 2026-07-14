@@ -374,6 +374,61 @@ body {
 #strokeCanvas { z-index: 3; pointer-events: none; }
 #gridCanvas { z-index: 4; pointer-events: none; }
 
+/* When zoomed in, allow the enlarged canvas to be panned (scrolled) */
+#canvasWrap.zoomed { overflow: auto; }
+#canvasWrap.zoomed::-webkit-scrollbar { display: none; }
+#canvasWrap.zoomed { scrollbar-width: none; }
+#canvasWrap.zoomed.can-pan { cursor: grab; }
+#canvasWrap.panning { cursor: grabbing; }
+
+/* Zoom controls (bottom-right overlay) */
+.zoom-controls {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(18, 18, 22, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 11px;
+  padding: 3px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  cursor: default;
+}
+.zoom-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: #f0f0f2;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+.zoom-btn:hover { background: rgba(255, 255, 255, 0.14); }
+.zoom-btn:active { background: rgba(255, 255, 255, 0.22); }
+.zoom-level {
+  min-width: 52px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: #cfcfd4;
+  font: 600 12px/1 inherit;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.zoom-level:hover { background: rgba(255, 255, 255, 0.14); color: #fff; }
+
 #cursorRing {
   position: absolute;
   border: 1.5px solid rgba(255,255,255,0.45);

@@ -2467,7 +2467,37 @@ function applyZoom(z) {
     const cw = bgCanvas.width * zoom, ch = bgCanvas.height * zoom;
     for (const c of [bgCanvas, paintCanvas, strokeCanvas, gridCanvas, maskCanvasEl]) { c.style.width = cw + 'px'; c.style.height = ch + 'px'; }
   }
+  canvasWrap.classList.toggle('zoomed', zoom > 1);
+  const zl = document.getElementById('zoomLevel');
+  if (zl) zl.textContent = Math.round(zoom * 100) + '%';
 }
+
+// Zoom toward a screen point (keeps the content under the cursor fixed)
+function zoomAt(newZoom, clientX, clientY) {
+  const r = canvasWrap.getBoundingClientRect();
+  const nz = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, newZoom));
+  if (nz === zoom) return;
+  const contentX = (canvasWrap.scrollLeft + clientX - r.left) / zoom;
+  const contentY = (canvasWrap.scrollTop + clientY - r.top) / zoom;
+  applyZoom(nz);
+  canvasWrap.scrollLeft = contentX * nz - (clientX - r.left);
+  canvasWrap.scrollTop  = contentY * nz - (clientY - r.top);
+}
+
+function zoomByStep(factor) {
+  const r = canvasWrap.getBoundingClientRect();
+  zoomAt(zoom * factor, r.left + r.width / 2, r.top + r.height / 2);
+}
+
+function resetZoom() {
+  applyZoom(1);
+  canvasWrap.scrollLeft = 0;
+  canvasWrap.scrollTop = 0;
+}
+
+// Pan (desktop): hold Space or middle-mouse and drag to move the zoomed canvas
+let spaceHeld = false;
+const pan = { active: false, startX: 0, startY: 0, startLeft: 0, startTop: 0 };
 
 // ── Continuous spray emitter (VandalSquad / Playdo feel) ──
 // The can keeps spraying while held — even when stationary — so paint builds
@@ -2517,6 +2547,16 @@ function startSprayLoop() {
 function stopSprayLoop() { if (sprayRAF) { cancelAnimationFrame(sprayRAF); sprayRAF = null; } }
 
 function onPointerDown(e) {
+  // Space-held or middle-mouse → pan the zoomed canvas instead of painting
+  if (!e.touches && (spaceHeld || e.button === 1) && zoom > 1) {
+    e.preventDefault();
+    pan.active = true;
+    pan.startX = e.clientX; pan.startY = e.clientY;
+    pan.startLeft = canvasWrap.scrollLeft; pan.startTop = canvasWrap.scrollTop;
+    canvasWrap.classList.add('panning');
+    return;
+  }
+
   if (e.button && e.button !== 0) return;
 
   // Two fingers → pinch-zoom + pan (not paint)
@@ -2568,6 +2608,15 @@ function onPointerDown(e) {
 }
 
 function onPointerMove(e) {
+  // Active pan drag (space / middle-mouse)
+  if (pan.active) {
+    e.preventDefault();
+    canvasWrap.scrollLeft = pan.startLeft - (e.clientX - pan.startX);
+    canvasWrap.scrollTop  = pan.startTop  - (e.clientY - pan.startY);
+    if (typeof window.updateCanvasFades === 'function') window.updateCanvasFades();
+    return;
+  }
+
   // Two-finger pinch-zoom + pan
   if (gesture.active && e.touches && e.touches.length >= 2) {
     e.preventDefault();
@@ -2612,6 +2661,7 @@ function onPointerMove(e) {
 }
 
 function onPointerUp() {
+  if (pan.active) { pan.active = false; canvasWrap.classList.remove('panning'); return; }
   if (gesture.active) { gesture.active = false; return; }
   stopSprayLoop();
   if (!state.painting) return;
@@ -2632,11 +2682,14 @@ function updateCursor(pos) {
   if (state.brush === 'chisel') size = r * 2.4 + 2;
   else size = r * 2 + 2;
 
+  // The ring lives inside the (scrolled, CSS-scaled) canvas content, so scale
+  // both its size and position by the current zoom to stay aligned with the brush.
+  const vs = size * zoom;
   cursorRing.style.display = 'block';
-  cursorRing.style.width = size + 'px';
-  cursorRing.style.height = size + 'px';
-  cursorRing.style.left = (pos.x - size / 2) + 'px';
-  cursorRing.style.top = (pos.y - size / 2) + 'px';
+  cursorRing.style.width = vs + 'px';
+  cursorRing.style.height = vs + 'px';
+  cursorRing.style.left = (pos.x * zoom - vs / 2) + 'px';
+  cursorRing.style.top = (pos.y * zoom - vs / 2) + 'px';
 
   cursorRing.style.borderColor = 'rgba(255,255,255,0.4)';
   cursorRing.style.borderRadius = '50%';
@@ -2808,6 +2861,20 @@ function init() {
   window.addEventListener('touchend', onPointerUp);
   canvasWrap.addEventListener('mouseleave', () => { cursorRing.style.display = 'none'; });
   paintCanvas.addEventListener('contextmenu', e => e.preventDefault());
+  // Keep pan tracking even if the cursor slips off the canvas mid-drag
+  window.addEventListener('mousemove', e => { if (pan.active) onPointerMove(e); });
+
+  // Mouse-wheel / trackpad-pinch → zoom toward the cursor
+  canvasWrap.addEventListener('wheel', e => {
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+    zoomAt(zoom * factor, e.clientX, e.clientY);
+  }, { passive: false });
+
+  // Zoom control buttons
+  document.getElementById('zoomIn')?.addEventListener('click', () => zoomByStep(1.4));
+  document.getElementById('zoomOut')?.addEventListener('click', () => zoomByStep(1 / 1.4));
+  document.getElementById('zoomLevel')?.addEventListener('click', resetZoom);
 
   // Surface
   document.getElementById('surfaceSelect').addEventListener('change', e => changeSurface(e.target.value));
@@ -2874,7 +2941,14 @@ function init() {
       case '4': document.querySelector('[data-cap="supafat"]').click(); break;
       case 's': if (!e.ctrlKey) { e.preventDefault(); document.querySelector('[data-brush="spray"]').click(); } break;
       case 'm': document.querySelector('[data-brush="marker"]').click(); break;
+      case '=': case '+': e.preventDefault(); zoomByStep(1.4); break;
+      case '-': case '_': e.preventDefault(); zoomByStep(1 / 1.4); break;
+      case '0': e.preventDefault(); resetZoom(); break;
+      case ' ': if (!spaceHeld) { spaceHeld = true; e.preventDefault(); canvasWrap.classList.add('can-pan'); } break;
     }
+  });
+  window.addEventListener('keyup', e => {
+    if (e.key === ' ') { spaceHeld = false; canvasWrap.classList.remove('can-pan'); }
   });
 
   // Resize
