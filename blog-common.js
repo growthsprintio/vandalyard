@@ -54,6 +54,15 @@ function stripHtml(html) {
   return (d.textContent || '').replace(/\s+/g, ' ').trim();
 }
 
+// Excerpts can arrive cut mid-word; end them on a whole word with an ellipsis
+function tidyExcerpt(text) {
+  const t = (text || '').trim();
+  if (!t || /[.!?…"”)]$/.test(t)) return t;
+  const cut = t.lastIndexOf(' ');
+  const head = (cut > 40 ? t.slice(0, cut) : t).replace(/[\s,;:—–-]+$/, '');
+  return /[.!?]$/.test(head) ? head : head + '…';
+}
+
 // ── SEO: inject/update <head> tags ──
 
 function setMeta(attr, key, content) {
@@ -159,7 +168,7 @@ function postCardHtml(post) {
   const img = post.featured_image
     ? `<img class="post-card-img" src="${escHtml(post.featured_image)}" alt="${escHtml(post.featured_alt || post.title)}" loading="lazy">`
     : `<div class="post-card-img post-card-noimg"></div>`;
-  const desc = post.excerpt || stripHtml(post.body).slice(0, 140);
+  const desc = tidyExcerpt(post.excerpt || stripHtml(post.body).slice(0, 160));
   return `
     <a class="post-card" href="${postUrl(post)}">
       ${img}

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="/consent.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -30,14 +31,22 @@
     "description": "A free online graffiti canvas. Spray virtual trains, walls, billboards, water towers, subways and rooftop heaven spots with realistic caps, colors, drips and blends, then post your art to the community wall."
   }
   </script>
+  <meta name="twitter:card" content="summary_large_image">
+  <meta property="og:image" content="https://vandalyard.com/og-default.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:image" content="https://vandalyard.com/og-default.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap">
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="studio-page">
   <div id="app">
 
     <header id="topbar">
       <div class="topbar-left">
-        <a href="/" style="text-decoration:none"><h1>VANDAL YARD</h1></a>
+        <a href="/" class="brand" aria-label="Vandal Yard home">Vandal Yard</a>
       </div>
       <nav class="topbar-right">
         <a href="/" class="nav-link">THE WALL</a>

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="/consent.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -8,6 +9,14 @@
   <meta name="description" content="Get in touch with Vandal Yard — questions, feedback, or report content on The Wall.">
   <link rel="canonical" href="https://vandalyard.com/contact.html">
   <meta name="google-adsense-account" content="ca-pub-5794731202035606">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta property="og:image" content="https://vandalyard.com/og-default.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:image" content="https://vandalyard.com/og-default.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap">
   <link rel="stylesheet" href="/style.css">
   <style>
     body.doc-page { overflow-y: auto; }
@@ -37,16 +46,17 @@
   <div id="app">
     <header id="topbar">
       <div class="topbar-left">
-        <a href="/" style="text-decoration:none"><h1>VANDAL YARD</h1></a>
+        <a href="/" class="brand" aria-label="Vandal Yard home">Vandal Yard</a>
       </div>
       <nav class="topbar-right">
         <a href="/" class="nav-link">THE WALL</a>
+        <a href="/blog" class="nav-link">BLOG</a>
         <a href="/go-paint.html" class="nav-link nav-go-paint">GO PAINT</a>
       </nav>
     </header>
 
     <main class="doc-wrap">
-      <h1>CONTACT</h1>
+      <h1>Contact</h1>
       <p>Questions, feedback, partnership ideas, or need to report a piece on The Wall? Send us a message below — we read everything. You don't need an account, and you can leave the name/email blank if you'd rather stay anonymous (though an email helps if you want a reply).</p>
 
       <form id="contactForm" class="cform" autocomplete="off">
